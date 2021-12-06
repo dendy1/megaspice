@@ -1,31 +1,18 @@
-// Copyright 2018 The Flutter team. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+import 'package:authentication_repository/authentication_repository.dart';
+import 'package:bloc/bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/widgets.dart';
+import 'package:megaspice/app/bloc_observer.dart';
 
-import 'package:flutter/material.dart';
-import 'package:megaspice/feed/feed.dart';
+import 'app/view/app.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Feed',
-      theme: ThemeData(
-          primaryColor: Colors.black,
-          primaryTextTheme:
-              const TextTheme(headline6: TextStyle(color: Colors.black)),
-          primaryIconTheme: const IconThemeData(color: Colors.black),
-          appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xfff8faf8),
-              titleTextStyle: TextStyle(color: Colors.black),
-              iconTheme: IconThemeData(color: Colors.black)),
-          bottomAppBarTheme: const BottomAppBarTheme(
-
-          )),
-      home: Home(),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  final authenticationRepository = AuthenticationRepository();
+  await authenticationRepository.user.first;
+  BlocOverrides.runZoned(
+      () => runApp(App(authenticationRepository: authenticationRepository,)),
+      blocObserver: AppBlocObserver(),
+  );
 }

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "994888090166",
+    "project_id": "megaspice-1978c",
+    "storage_bucket": "megaspice-1978c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:994888090166:android:df094390a0cfe70e2b4e97",
+        "android_client_info": {
+          "package_name": "org.vsu.kuskus.megaspice"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "994888090166-ku4ekbac9ctip79p1kacpav5fg70g2t4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK7c-xsO3naRlbdMuUhzeIjIVCVZWxC-4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "994888090166-ku4ekbac9ctip79p1kacpav5fg70g2t4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
