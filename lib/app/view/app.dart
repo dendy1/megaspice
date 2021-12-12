@@ -3,14 +3,17 @@ import 'package:flow_builder/flow_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:megaspice/app/app.dart';
+import 'package:megaspice/onboarding/onboarding_page.dart';
 
 class App extends StatelessWidget {
   const App(
-      {Key? key, required AuthenticationRepository authenticationRepository})
+      {Key? key, required AuthenticationRepository authenticationRepository, required bool onboardingFinished})
       : _authenticationRepository = authenticationRepository,
+        _onboardingFinished = onboardingFinished,
         super(key: key);
 
   final AuthenticationRepository _authenticationRepository;
+  final bool _onboardingFinished;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +23,7 @@ class App extends StatelessWidget {
         create: (_) => AppBloc(
           authenticationRepository: _authenticationRepository,
         ),
-        child: const AppView(),
+        child: _onboardingFinished ? const AppView() : const OnboardingPage(),
       ),
     );
   }
