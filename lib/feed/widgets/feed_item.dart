@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:megaspice/posts/models/models.dart';
+import '../feed.dart';
 
-class PostListItem extends StatelessWidget {
-  const PostListItem({Key? key, required this.post}) : super(key: key);
+class FeedItem extends StatelessWidget {
+  const FeedItem({Key? key, required this.post}) : super(key: key);
 
   final Post post;
 

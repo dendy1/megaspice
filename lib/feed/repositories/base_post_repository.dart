@@ -1,4 +1,4 @@
-import '../posts.dart';
+import '../feed.dart';
 
 abstract class BasePostRepository {
   Future<void> createPost({required Post post});

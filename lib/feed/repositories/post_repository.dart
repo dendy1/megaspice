@@ -1,4 +1,4 @@
-import '../posts.dart';
+import '../feed.dart';
 import 'base_post_repository.dart';
 
 class PostRepository extends BasePostRepository {

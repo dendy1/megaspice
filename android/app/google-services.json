@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "994888090166-b7nhuihm42psn3n6cdmks4jgsnbve2as.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.vsu.kuskus.megaspice",
+            "certificate_hash": "48436986960f470be2d25c9036a45efe4cd52a21"
+          }
+        },
+        {
           "client_id": "994888090166-ku4ekbac9ctip79p1kacpav5fg70g2t4.apps.googleusercontent.com",
           "client_type": 3
         }

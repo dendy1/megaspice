@@ -9,27 +9,29 @@ part 'app_event.dart';
 part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
-  AppBloc({required AuthenticationRepository authenticationRepository})
+  AppBloc({required AuthenticationRepository authenticationRepository, required bool onboardingFinished})
       : _authenticationRepository = authenticationRepository,
         super(authenticationRepository.currentUser.isNotEmpty
             ? AppState.authenticated(authenticationRepository.currentUser)
-            : const AppState.unauthenticated()) {
+            : (onboardingFinished ? const AppState.unauthenticated() : const AppState.onboarding())) {
     on<AppUserChanged>(_onUserChanged);
     on<AppLogoutRequested>(_onLogoutRequested);
-    _userSubscription = _authenticationRepository.user
-        .listen((user) => add(AppUserChanged(user)));
+    _userSubscription = _authenticationRepository.user.listen((user) => add(AppUserChanged(user)));
+    _onboardingFinished = onboardingFinished;
   }
 
   final AuthenticationRepository _authenticationRepository;
   late final StreamSubscription<User> _userSubscription;
+  late final bool _onboardingFinished;
 
-  void _onUserChanged(AppUserChanged event, Emitter<AppState> emitter) {
-    emitter(event.user.isNotEmpty
+  void _onUserChanged(AppUserChanged event, Emitter<AppState> emit) {
+    print("Onboarding Finished: " + _onboardingFinished.toString());
+    emit(event.user.isNotEmpty
         ? AppState.authenticated(event.user)
-        : const AppState.unauthenticated());
+        : _onboardingFinished ? const AppState.unauthenticated() : const AppState.onboarding());
   }
 
-  void _onLogoutRequested(AppLogoutRequested event, Emitter<AppState> emitter) {
+  void _onLogoutRequested(AppLogoutRequested event, Emitter<AppState> emit) {
     unawaited(_authenticationRepository.logOut());
   }
 

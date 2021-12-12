@@ -14,6 +14,7 @@ Future<void> main() async {
   await authenticationRepository.user.first;
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool? onboardingFinished = prefs.getBool("onboardingFinished");
+  print("Onboarding Finished: " + onboardingFinished.toString());
   BlocOverrides.runZoned(
     () => runApp(App(
       authenticationRepository: authenticationRepository,

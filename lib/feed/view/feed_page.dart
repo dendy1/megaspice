@@ -1,27 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:megaspice/app/app.dart';
+import 'package:megaspice/login/login.dart';
 
-import '../posts.dart';
+import '../feed.dart';
 
-class PostsPage extends StatelessWidget {
-  const PostsPage({Key? key}) : super(key: key);
+class FeedPage extends StatelessWidget {
+  const FeedPage({Key? key, required bool guest})
+      : _guest = guest,
+        super(key: key);
 
-  final _iconSize = 40.0;
+  final double _iconSize = 40.0;
+  final bool _guest;
 
-  static Page page() => const MaterialPage<void>(child: PostsPage());
+  static Page page(bool guest) => MaterialPage<void>(child: FeedPage(guest: guest));
 
-  _buildTopBar() {
+  _buildTopBar(BuildContext context) {
     return AppBar(
       centerTitle: true,
       elevation: 1.0,
       title: const Text(
         'MegaSpice',
       ),
+      actions: [
+        IconButton(
+          key: const Key('homePage_logout_iconButton'),
+          icon: const Icon(Icons.exit_to_app),
+          onPressed: () => context.read<AppBloc>().add(AppLogoutRequested()),
+        )
+      ],
     );
   }
 
-  _buildBottomBar() {
+  _buildBottomBar(BuildContext context) {
     return Container(
       color: Colors.white,
       height: 60.0,
@@ -43,8 +55,13 @@ class PostsPage extends StatelessWidget {
                 iconSize: _iconSize,
               ),
               IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.accessible_forward_rounded),
+                onPressed: () {
+                  if (_guest) {
+                  } else {
+                    print("Go to user profile page");
+                  }
+                },
+                icon: _guest ? const Icon(Icons.login_outlined) : const Icon(Icons.account_circle_outlined),
                 iconSize: _iconSize,
               )
             ],
@@ -57,12 +74,12 @@ class PostsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildTopBar(),
+      appBar: _buildTopBar(context),
       body: BlocProvider(
-        create: (_) => PostBloc(httpClient: http.Client())..add(PostFetched()),
+        create: (_) => FeedBloc(httpClient: http.Client())..add(PostFetched()),
         child: PostsList(),
       ),
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: _buildBottomBar(context),
     );
   }
 }

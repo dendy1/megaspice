@@ -1,24 +1,24 @@
-part of 'post_bloc.dart';
+part of 'feed_bloc.dart';
 
-enum PostStatus { initial, success, failure }
+enum FeedStatus { initial, success, failure }
 
-class PostState extends Equatable {
-  const PostState({
-    this.status = PostStatus.initial,
+class FeedState extends Equatable {
+  const FeedState({
+    this.status = FeedStatus.initial,
     this.posts = const <Post>[],
     this.hasReachedMax = false,
   });
 
-  final PostStatus status;
+  final FeedStatus status;
   final List<Post> posts;
   final bool hasReachedMax;
 
-  PostState copyWith({
-    PostStatus? status,
+  FeedState copyWith({
+    FeedStatus? status,
     List<Post>? posts,
     bool? hasReachedMax,
   }) {
-    return PostState(
+    return FeedState(
         status: status ?? this.status,
         posts: posts ?? this.posts,
         hasReachedMax: hasReachedMax ?? this.hasReachedMax,

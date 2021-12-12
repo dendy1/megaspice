@@ -7,10 +7,10 @@ import 'package:equatable/equatable.dart';
 import 'package:http/http.dart' as http;
 import 'package:stream_transform/stream_transform.dart';
 
-import '../posts.dart';
+import '../feed.dart';
 
-part 'post_event.dart';
-part 'post_state.dart';
+part 'feed_event.dart';
+part 'feed_state.dart';
 
 const _postLimit = 20;
 const _throttleDuration = Duration(milliseconds: 100);
@@ -21,8 +21,8 @@ EventTransformer<E> throttleDroppable<E>(Duration duration) {
   };
 }
 
-class PostBloc extends Bloc<PostEvent, PostState> {
-  PostBloc({required this.httpClient}) : super(const PostState()) {
+class FeedBloc extends Bloc<FeedEvent, FeedState> {
+  FeedBloc({required this.httpClient}) : super(const FeedState()) {
     on<PostFetched>(_onPostFetched,
         transformer: throttleDroppable(_throttleDuration));
   }
@@ -30,28 +30,28 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   final http.Client httpClient;
 
   Future<void> _onPostFetched(
-      PostFetched event, Emitter<PostState> emitter) async {
+      PostFetched event, Emitter<FeedState> emit) async {
     if (state.hasReachedMax) return;
     try {
-      if (state.status == PostStatus.initial) {
+      if (state.status == FeedStatus.initial) {
         final posts = await _fetchPosts();
-        return emitter(state.copyWith(
-          status: PostStatus.success,
+        return emit(state.copyWith(
+          status: FeedStatus.success,
           posts: posts,
           hasReachedMax: false,
         ));
       }
 
       final posts = await _fetchPosts(state.posts.length);
-      emitter(posts.isEmpty
+      emit(posts.isEmpty
           ? state.copyWith(hasReachedMax: true)
           : state.copyWith(
-              status: PostStatus.success,
+              status: FeedStatus.success,
               posts: List.of(state.posts)..addAll(posts),
               hasReachedMax: false));
     } catch (ex) {
       print(ex);
-      emitter(state.copyWith(status: PostStatus.failure));
+      emit(state.copyWith(status: FeedStatus.failure));
     }
   }
 

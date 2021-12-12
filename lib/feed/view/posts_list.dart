@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../posts.dart';
+import '../feed.dart';
 
 class PostsList extends StatefulWidget {
   const PostsList({Key? key}) : super(key: key);
@@ -20,12 +20,12 @@ class _PostsListState extends State<PostsList> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PostBloc, PostState>(
+    return BlocBuilder<FeedBloc, FeedState>(
       builder: (context, state) {
         switch (state.status) {
-          case PostStatus.failure:
+          case FeedStatus.failure:
             return const Center(child: Text('failed to fetch posts'));
-          case PostStatus.success:
+          case FeedStatus.success:
             if (state.posts.isEmpty) {
               return const Center(child: Text('no posts'));
             }
@@ -33,7 +33,7 @@ class _PostsListState extends State<PostsList> {
               itemBuilder: (BuildContext context, int index) {
                 return index >= state.posts.length
                     ? BottomLoader()
-                    : PostListItem(post: state.posts[index]);
+                    : FeedItem(post: state.posts[index]);
               },
               itemCount: state.hasReachedMax
                   ? state.posts.length
@@ -56,7 +56,7 @@ class _PostsListState extends State<PostsList> {
   }
 
   void _onScroll() {
-    if (_isBottom) context.read<PostBloc>().add(PostFetched());
+    if (_isBottom) context.read<FeedBloc>().add(PostFetched());
   }
 
   bool get _isBottom {

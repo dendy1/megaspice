@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'package:flow_builder/flow_builder.dart';
 import 'package:flutter/material.dart';
-import 'package:megaspice/onboarding/data/data.dart';
+import 'package:megaspice/app/app.dart';
+import 'package:megaspice/onboarding/data/onboarding_data.dart';
+import 'package:megaspice/sign_up/view/sign_up_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -40,6 +43,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _persistOnboarding() async {
     var preferences = await SharedPreferences.getInstance();
     preferences.setBool("onboardingFinished", true);
+    context.flow<AppState>().update((state) => AppState.unauthenticated());
   }
 
   @override

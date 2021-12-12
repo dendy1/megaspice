@@ -3,7 +3,6 @@ import 'package:flow_builder/flow_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:megaspice/app/app.dart';
-import 'package:megaspice/onboarding/onboarding_page.dart';
 
 class App extends StatelessWidget {
   const App(
@@ -22,8 +21,9 @@ class App extends StatelessWidget {
       child: BlocProvider(
         create: (_) => AppBloc(
           authenticationRepository: _authenticationRepository,
+          onboardingFinished: _onboardingFinished,
         ),
-        child: _onboardingFinished ? const AppView() : const OnboardingPage(),
+        child: const AppView(),
       ),
     );
   }
@@ -35,8 +35,8 @@ class AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: FlowBuilder<AppStatus>(
-      state: context.select((AppBloc bloc) => bloc.state.status),
+        home: FlowBuilder<AppState>(
+      state: context.select((AppBloc bloc) => bloc.state),
       onGeneratePages: onGenerateAppViewPages,
     ));
   }

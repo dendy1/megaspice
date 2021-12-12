@@ -59,8 +59,8 @@ class AuthenticationRepository {
           email: email, password: password);
     } on firebase.FirebaseAuthException catch (ex) {
       throw SignUpWithEmailAndPasswordFailure.fromCode(ex.code);
-    } catch (_) {
-      throw const SignUpWithEmailAndPasswordFailure();
+    } catch (ex) {
+      throw SignUpWithEmailAndPasswordFailure(ex.toString());
     }
   }
 
@@ -85,8 +85,8 @@ class AuthenticationRepository {
       await _firebaseAuth.signInWithCredential(credential);
     } on firebase.FirebaseAuthException catch (ex) {
       throw LogInWithGoogleFailure.fromCode(ex.code);
-    } catch (_) {
-      throw const LogInWithGoogleFailure();
+    } catch (ex) {
+      throw LogInWithGoogleFailure(ex.toString());
     }
   }
 
@@ -101,8 +101,8 @@ class AuthenticationRepository {
           email: email, password: password);
     } on firebase.FirebaseAuthException catch (ex) {
       throw LogInWithEmailAndPasswordFailure.fromCode(ex.code);
-    } catch (_) {
-      throw LogInWithEmailAndPasswordFailure();
+    } catch (ex) {
+      throw LogInWithEmailAndPasswordFailure(ex.toString());
     }
   }
 
@@ -115,8 +115,8 @@ class AuthenticationRepository {
         _firebaseAuth.signOut(),
         _googleSignIn.signOut(),
       ]);
-    } catch (_) {
-      throw LogOutFailure();
+    } catch (ex) {
+      throw LogOutFailure(ex.toString());
     }
   }
 }
