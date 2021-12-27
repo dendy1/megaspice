@@ -57,6 +57,7 @@ class FeedPage extends StatelessWidget {
               IconButton(
                 onPressed: () {
                   if (_guest) {
+                    context.read<AppBloc>().add(AppLoginRequested());
                   } else {
                     print("Go to user profile page");
                   }

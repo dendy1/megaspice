@@ -8,6 +8,7 @@ abstract class AppEvent extends Equatable {
 }
 
 class AppLogoutRequested extends AppEvent {}
+class AppLoginRequested extends AppEvent {}
 
 class AppUserChanged extends AppEvent {
   @visibleForTesting

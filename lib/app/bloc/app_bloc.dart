@@ -14,6 +14,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         super(authenticationRepository.currentUser.isNotEmpty
             ? AppState.authenticated(authenticationRepository.currentUser)
             : (onboardingFinished ? const AppState.unauthenticated() : const AppState.onboarding())) {
+    on<AppLoginRequested>(_onLoginRequested);
     on<AppUserChanged>(_onUserChanged);
     on<AppLogoutRequested>(_onLogoutRequested);
     _userSubscription = _authenticationRepository.user.listen((user) => add(AppUserChanged(user)));
@@ -25,7 +26,6 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   late final bool _onboardingFinished;
 
   void _onUserChanged(AppUserChanged event, Emitter<AppState> emit) {
-    print("Onboarding Finished: " + _onboardingFinished.toString());
     emit(event.user.isNotEmpty
         ? AppState.authenticated(event.user)
         : _onboardingFinished ? const AppState.unauthenticated() : const AppState.onboarding());
@@ -33,6 +33,10 @@ class AppBloc extends Bloc<AppEvent, AppState> {
 
   void _onLogoutRequested(AppLogoutRequested event, Emitter<AppState> emit) {
     unawaited(_authenticationRepository.logOut());
+  }
+
+  void _onLoginRequested(AppLoginRequested event, Emitter<AppState> emit) {
+    emit(const AppState.logging());
   }
 
   @override
