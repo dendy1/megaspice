@@ -22,6 +22,17 @@ dependencies:
   font_awesome_flutter: ^9.2.0
   formz: ^0.4.1
   shared_preferences: ^2.0.9
+  bot_toast: ^4.0.1
+  cloud_firestore: ^3.1.6
+  firebase_core: ^1.11.0
+  firebase_analytics: ^9.0.5
+  firebase_storage: ^10.2.5
+  image_cropper: ^1.4.1
+  image_picker: ^0.8.4+4
+  uuid: ^3.0.5
+  cached_network_image: ^3.2.0
+  timeago: ^3.1.0
+  intl: ^0.17.0
 
 dev_dependencies:
   flutter_test:

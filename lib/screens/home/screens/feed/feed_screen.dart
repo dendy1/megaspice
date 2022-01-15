@@ -1,0 +1,183 @@
+import 'package:bot_toast/bot_toast.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:megaspice/cubit/cubits.dart';
+import 'package:megaspice/models/models.dart';
+import 'package:megaspice/repositories/repositories.dart';
+import 'package:megaspice/widgets/widgets.dart';
+
+import 'bloc/feed_bloc.dart';
+
+class FeedScreen extends StatefulWidget {
+   @override
+  State<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        var status = context.read<FeedBloc>().state.status;
+        if (_scrollController.offset >= _scrollController.position.maxScrollExtent * 0.75 && !_scrollController.position.outOfRange && status != FeedStatus.paginating && status != FeedStatus.failure) {
+          context.read<FeedBloc>().add(FeedPaginateEvent());
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<FeedBloc, FeedState>(
+      listener: (context, feedState) {
+        if (feedState.status == FeedStatus.failure) {
+          showDialog(
+            context: context,
+            builder: (context) =>
+                ErrorDialog(message: feedState.failure.message),
+          );
+        } else if (feedState.status == FeedStatus.paginating) {
+          //BotToast.showText(text: "fetching more posts");
+          //BotToast.showLoading();
+        }
+      },
+      builder: (context, feedState) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("MegaSpice"),
+            actions: [
+              if (feedState.posts.isEmpty &&
+                  feedState.status == FeedStatus.loaded)
+                IconButton(
+                  onPressed: () =>
+                      context.read<FeedBloc>().add(FeedFetchEvent()),
+                  icon: Icon(
+                    Icons.refresh,
+                  ),
+                ),
+            ],
+          ),
+          body: _buildBody(feedState),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(FeedState feedState) {
+    switch (feedState.status) {
+      case FeedStatus.loading:
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+
+      default:
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(
+              Duration(milliseconds: 300),
+            );
+            context.read<FeedBloc>().add(FeedFetchEvent());
+          },
+          child: feedState.posts.isEmpty &&
+                  feedState.status == FeedStatus.loaded
+              ? _buildShowFirebaseUsers()
+              : ListView.builder(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: feedState.posts.length,
+                  itemBuilder: (context, index) {
+                    final post = feedState.posts[index];
+                    if (post == null) {
+                      return SizedBox();
+                    }
+                    final likedPostState = context.watch<LikePostCubit>().state;
+                    final isLiked =
+                        likedPostState.likedPostIds.contains(post.id);
+                    return PostView(
+                      post: post,
+                      isLiked: isLiked,
+                      onLike: () {
+                        if (isLiked) {
+                          context
+                              .read<LikePostCubit>()
+                              .unLikePost(postModel: post);
+                        } else {
+                          context
+                              .read<LikePostCubit>()
+                              .likePost(postModel: post);
+                        }
+                      },
+                    );
+                  },
+                ),
+        );
+    }
+  }
+
+  Widget _buildShowFirebaseUsers() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Suggestions for You',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  'See All',
+                  style: const TextStyle(fontSize: 15, color: Colors.blue),
+                ),
+              )
+            ],
+          ),
+          StreamBuilder<List<User>>(
+              stream: UserRepo().getAllFirebaseUsers(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final userList = snapshot.data;
+                  if (userList == null) {
+                    return Container(
+                      height: 160,
+                      child: Align(child: Text("Unable to fetch users")),
+                    );
+                  }
+                  return Container(
+                    height: 160,
+                    child: ListView.builder(
+                      padding: EdgeInsets.only(right: 10),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: userList.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final user = userList[index];
+                        return SuggestionTile(user: user);
+                      },
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Icon(Icons.error_outline);
+                } else {
+                  return CircularProgressIndicator();
+                }
+              })
+        ],
+      ),
+    );
+  }
+}

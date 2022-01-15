@@ -1,29 +1,96 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class User extends Equatable {
-  final String id;
-  final String? email;
+  final String uid;
   final String? username;
-  final String? name;
+  final String? email;
+  final String? photo;
+  final String? displayName;
   final String? gender;
   final DateTime? dateOfBirth;
-  final String? photo;
+  final int? followers;
+  final int? following;
 
   const User({
-    required this.id,
-    this.email,
+    required this.uid,
     this.username,
-    this.name,
+    this.email,
+    this.photo,
+    this.displayName,
     this.gender,
     this.dateOfBirth,
-    this.photo,
+    this.followers,
+    this.following,
   });
 
-  static const empty = User(id: '');
+  static const empty = User(
+    uid: '',
+    username: '',
+    email: '',
+    photo: '',
+    displayName: '',
+    gender: '',
+    dateOfBirth: null,
+    followers: 0,
+    following: 0,
+  );
 
   bool get isEmpty => this == User.empty;
   bool get isNotEmpty => this != User.empty;
 
+  User copyWith({
+    String? id,
+    String? username,
+    String? email,
+    String? photo,
+    String? name,
+    String? gender,
+    DateTime? dateOfBirth,
+    int? followers,
+    int? following,
+  }) {
+    return new User(
+      uid: id ?? this.uid,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      displayName: name ?? this.displayName,
+      photo: photo ?? this.photo,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      followers: followers ?? this.followers,
+      following: following ?? this.following,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, email, username, gender, dateOfBirth, photo];
+  List<Object?> get props => [uid, username, email, photo, displayName, gender, dateOfBirth, followers, following];
+
+  Map<String, dynamic> toDocument() {
+    return {
+      'uid': uid,
+      'username': username ?? '',
+      'email': email ?? '',
+      'photo': photo ?? '',
+      'name': displayName ?? '',
+      'gender': gender ?? '',
+      'dateOfBirth': dateOfBirth ?? '',
+      'followers': followers ?? 0,
+      'following': following ?? 0,
+    };
+  }
+
+  factory User.fromDocument(DocumentSnapshot doc) {
+    return User(
+      uid: doc.id,
+      username: doc.get('username'),
+      email: doc.get('email') ,
+      photo: doc.get('photo'),
+      displayName: doc.get('name'),
+      gender: doc.get('gender'),
+      //dateOfBirth: doc.get('dateOfBirth'),
+      following: doc.get('following'),
+      followers: doc.get('followers'),
+    );
+  }
 }

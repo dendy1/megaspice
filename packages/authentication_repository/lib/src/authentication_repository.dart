@@ -3,18 +3,16 @@ import 'dart:async';
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:cache/cache.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
-import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:meta/meta.dart';
-import 'models/models.dart';
 
 /// {@template authentication_repository}
 /// Repository which manages user authentication.
 /// {@endtemplate}
-class AuthenticationRepository {
+class AuthRepo {
   /// {@macro authentication_repository}
-  AuthenticationRepository({
+  AuthRepo({
     CacheClient? cache,
     firebase.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
@@ -53,10 +51,11 @@ class AuthenticationRepository {
 
   /// Creates a new user with the provided [email] and [password].
   /// Throws a [SignUpWithEmailAndPasswordFailure] if an exception occurs.
-  Future<void> signUp({required String email, required String password}) async {
+  Future<User?> signUp({required String email, required String password}) async {
     try {
-      await _firebaseAuth.createUserWithEmailAndPassword(
+      var signedInCredentials = await _firebaseAuth.createUserWithEmailAndPassword(
           email: email, password: password);
+      return signedInCredentials.user!.toUser;
     } on firebase.FirebaseAuthException catch (ex) {
       throw SignUpWithEmailAndPasswordFailure.fromCode(ex.code);
     } catch (ex) {
@@ -66,7 +65,7 @@ class AuthenticationRepository {
 
   /// Starts the Sign In with Google Flow.
   /// Throws a [LogInWithGoogleFailure] if an exception occurs.
-  Future<void> logInWithGoogle() async {
+  Future<User?> logInWithGoogle() async {
     try {
       late final firebase.AuthCredential credential;
       if (isWeb) {
@@ -82,7 +81,8 @@ class AuthenticationRepository {
           idToken: googleAuth.idToken,
         );
       }
-      await _firebaseAuth.signInWithCredential(credential);
+      var signedInCredentials = await _firebaseAuth.signInWithCredential(credential);
+      return signedInCredentials.user!.toUser;
     } on firebase.FirebaseAuthException catch (ex) {
       throw LogInWithGoogleFailure.fromCode(ex.code);
     } catch (ex) {
@@ -123,6 +123,6 @@ class AuthenticationRepository {
 
 extension on firebase.User {
   User get toUser {
-    return User(id: uid, email: email, name: displayName, photo: photoURL);
+    return User(uid: uid, email: email, username: email!.split("@")[0],  displayName: displayName, photo: photoURL);
   }
 }
