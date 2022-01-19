@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'widgets.dart';
 
 class ProfileStats extends StatelessWidget {
   final bool? isCurrentUser;
@@ -19,39 +18,18 @@ class ProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _Stats(
-                label: 'posts',
-                count: posts,
-              ),
-              _Stats(
-                label: 'followers',
-                count: followers,
-              ),
-              _Stats(
-                label: 'following',
-                count: following,
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ProfileButton(
-              isCurrentUser: isCurrentUser,
-              isFollowing: isFollowing,
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _Stats(
+          label: 'posts',
+          count: posts,
+        ),
+        SizedBox(height: 8,),
+        _Stats(
+          label: 'followers',
+          count: followers,
+        ),
+      ],
     );
   }
 }

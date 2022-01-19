@@ -11,6 +11,7 @@ class PostModel extends Equatable {
   final String imageUrl;
   final User author;
   final int likes;
+  final int comments;
   final DateTime dateTime;
 
   const PostModel({
@@ -19,6 +20,7 @@ class PostModel extends Equatable {
     required this.imageUrl,
     required this.author,
     required this.likes,
+    required this.comments,
     required this.dateTime,
   });
 
@@ -28,6 +30,7 @@ class PostModel extends Equatable {
     String? imageUrl,
     User? author,
     int? likes,
+    int? comments,
     DateTime? dateTime,
   }) {
     return new PostModel(
@@ -36,12 +39,13 @@ class PostModel extends Equatable {
       imageUrl: imageUrl ?? this.imageUrl,
       author: author ?? this.author,
       likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
       dateTime: dateTime ?? this.dateTime,
     );
   }
 
   @override
-  List<Object> get props => [caption, imageUrl, author, likes, dateTime];
+  List<Object> get props => [caption, imageUrl, author, likes, comments, dateTime];
 
   Map<String, dynamic> toDocuments() {
     final authorDocsRef = FirebaseFirestore.instance.collection(FirebaseConstants.users).doc(author.uid);
@@ -50,6 +54,7 @@ class PostModel extends Equatable {
       'imageUrl': imageUrl,
       'author': authorDocsRef,
       'likes': likes,
+      'comments': comments,
       'dateTime': Timestamp.fromDate(dateTime),
     };
   }
@@ -64,6 +69,7 @@ class PostModel extends Equatable {
         imageUrl: doc.get("imageUrl") ?? "",
         author: User.fromDocument(authorDoc),
         likes: (doc["likes"] ?? 0).toInt(),
+        comments: (doc["comments"] ?? 0).toInt(),
         dateTime: (doc.get("dateTime") as Timestamp).toDate(),
       );
     }

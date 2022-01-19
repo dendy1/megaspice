@@ -12,19 +12,28 @@ class PostRepo extends BasePostRepo {
 
   @override
   Future<void> createPost({
-    required PostModel postModel,
+    required PostModel post,
   }) async {
-    final createdPostRef =
-        await _firebaseFirestore.collection(FirebaseConstants.posts).add(
-              postModel.toDocuments(),
-            );
+    final authorRef = _firebaseFirestore
+        .collection(FirebaseConstants.users)
+        .doc(post.author.uid);
+    authorRef.update({"posts": FieldValue.increment(1)});
+
+    final createdPostRef = await _firebaseFirestore
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .add(
+          post.toDocuments(),
+        );
     final createPostData = await createdPostRef.get();
 
     if (createPostData != null) {
       final userFollowerRef = _firebaseFirestore
           .collection(FirebaseConstants.followers)
-          .doc(postModel.author.uid)
+          .doc(post.author.uid)
           .collection(FirebaseConstants.userFollowers);
+
       final userFollowerSnapshot = await userFollowerRef.get();
       userFollowerSnapshot.docs.forEach((element) {
         if (element.exists) {
@@ -43,35 +52,231 @@ class PostRepo extends BasePostRepo {
           .collection(FirebaseConstants.userFeed)
           .doc(createdPostRef.id)
           .set(createPostData.data()!);
+    } else {
+      authorRef.update({"posts": FieldValue.increment(-1)});
     }
   }
 
   @override
-  Future<void> createComment({
-    required PostModel postModel,
-    required CommentModel commentModel,
+  Future<void> deletePost({
+    required PostModel post,
   }) async {
-    final commentCollection = FirebaseConstants.comments;
-    final postCommentCollection = FirebaseConstants.postComments;
     await _firebaseFirestore
-        .collection(commentCollection)
-        .doc(commentModel.postId)
-        .collection(postCommentCollection)
-        .add(
-          commentModel.toDocuments(),
-        );
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .doc(post.id)
+        .delete();
+
+    final authorRef = _firebaseFirestore
+        .collection(FirebaseConstants.users)
+        .doc(post.author.uid);
+    authorRef.update({"posts": FieldValue.increment(-1)});
+
+    final userFollowerRef = _firebaseFirestore
+        .collection(FirebaseConstants.followers)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userFollowers);
+
+    final userFollowerSnapshot = await userFollowerRef.get();
+    userFollowerSnapshot.docs.forEach((element) async {
+      if (element.exists) {
+        await _firebaseFirestore
+            .collection(FirebaseConstants.feeds)
+            .doc(element.id)
+            .collection(FirebaseConstants.userFeed)
+            .doc(post.id)
+            .delete();
+      }
+    });
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.feeds)
+        .doc(FirebaseConstants.guestFeed)
+        .collection(FirebaseConstants.userFeed)
+        .doc(post.id)
+        .delete();
   }
 
   @override
-  Stream<List<Future<PostModel?>>> getUserPosts({
+  Future<void> createComment({
+    required PostModel post,
+    required CommentModel comment,
+  }) async {
+    await _firebaseFirestore
+        .collection(FirebaseConstants.comments)
+        .doc(comment.postId)
+        .collection(FirebaseConstants.postComments)
+        .add(
+          comment.toDocuments(),
+        );
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .doc(post.id)
+        .update({"comments": FieldValue.increment(1)});
+
+    final userFollowerRef = _firebaseFirestore
+        .collection(FirebaseConstants.followers)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userFollowers);
+
+    final userFollowerSnapshot = await userFollowerRef.get();
+    userFollowerSnapshot.docs.forEach((element) {
+      if (element.exists) {
+        _firebaseFirestore
+            .collection(FirebaseConstants.feeds)
+            .doc(element.id)
+            .collection(FirebaseConstants.userFeed)
+            .doc(post.id)
+            .update({"comments": FieldValue.increment(1)});
+      }
+    });
+
+    _firebaseFirestore
+        .collection(FirebaseConstants.feeds)
+        .doc(FirebaseConstants.guestFeed)
+        .collection(FirebaseConstants.userFeed)
+        .doc(post.id)
+        .update({"comments": FieldValue.increment(1)});
+  }
+
+  @override
+  Future<void> deleteComment({
+    required PostModel post,
+    required CommentModel comment,
+  }) async {
+    await _firebaseFirestore
+        .collection(FirebaseConstants.comments)
+        .doc(comment.postId)
+        .collection(FirebaseConstants.postComments)
+        .doc(comment.id)
+        .delete();
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .doc(post.id)
+        .update({"comments": FieldValue.increment(-1)});
+
+    final userFollowerRef = _firebaseFirestore
+        .collection(FirebaseConstants.followers)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userFollowers);
+
+    final userFollowerSnapshot = await userFollowerRef.get();
+    userFollowerSnapshot.docs.forEach((element) {
+      if (element.exists) {
+        _firebaseFirestore
+            .collection(FirebaseConstants.feeds)
+            .doc(element.id)
+            .collection(FirebaseConstants.userFeed)
+            .doc(post.id)
+            .update({"comments": FieldValue.increment(-1)});
+      }
+    });
+
+    _firebaseFirestore
+        .collection(FirebaseConstants.feeds)
+        .doc(FirebaseConstants.guestFeed)
+        .collection(FirebaseConstants.userFeed)
+        .doc(post.id)
+        .update({"comments": FieldValue.increment(-1)});
+  }
+
+  @override
+  Future<List<PostModel?>> getUserPosts({
     required String userId,
+    String? lastPostId,
+  }) async {
+    QuerySnapshot postsSnap;
+    if (lastPostId == null) {
+      postsSnap = await _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId)
+          .collection(FirebaseConstants.userPosts)
+          .orderBy("dateTime", descending: true)
+          .limit(FirebaseConstants.postToLoad)
+          .get();
+    } else {
+      final lastPostDoc = await _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId)
+          .collection(FirebaseConstants.userPosts)
+          .doc(lastPostId)
+          .get();
+      if (!lastPostDoc.exists) {
+        return [];
+      }
+      postsSnap = await _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId)
+          .collection(FirebaseConstants.userPosts)
+          .orderBy("dateTime", descending: true)
+          .startAfterDocument(lastPostDoc)
+          .limit(FirebaseConstants.postToLoad)
+          .get();
+    }
+
+    final futurePostList = Future.wait(
+        postsSnap.docs.map((post) => PostModel.fromDocument(post)).toList());
+    return futurePostList;
+  }
+
+  Stream<List<Future<PostModel?>>> getUserPostsStream({
+    required String userId,
+    String? lastPostId,
   }) {
-    final userCollection = FirebaseConstants.users;
-    final postCollection = FirebaseConstants.posts;
-    final authorRef = _firebaseFirestore.collection(userCollection).doc(userId);
+    if (lastPostId == null) {
+      return _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId)
+          .collection(FirebaseConstants.userPosts)
+          .orderBy("dateTime", descending: true)
+          .limit(FirebaseConstants.postToLoad)
+          .limit(FirebaseConstants.postToLoad)
+          .snapshots()
+          .map(
+            (querySnap) => querySnap.docs
+                .map(
+                  (queryDocSnap) => PostModel.fromDocument(queryDocSnap),
+                )
+                .toList(),
+          );
+    } else {
+      final lastPostDoc = _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId)
+          .collection(FirebaseConstants.userPosts)
+          .doc(lastPostId)
+          .get();
+
+      lastPostDoc.then((doc) {
+        return _firebaseFirestore
+            .collection(FirebaseConstants.posts)
+            .doc(userId)
+            .collection(FirebaseConstants.userPosts)
+            .orderBy("dateTime", descending: true)
+            .startAfterDocument(doc)
+            .limit(FirebaseConstants.postToLoad)
+            .snapshots()
+            .map(
+              (querySnap) => querySnap.docs
+              .map(
+                (queryDocSnap) => PostModel.fromDocument(queryDocSnap),
+          )
+              .toList(),
+        );
+      });
+    }
+
     return _firebaseFirestore
-        .collection(postCollection)
-        .where('author', isEqualTo: authorRef)
+        .collection(FirebaseConstants.posts)
+        .doc(userId)
+        .collection(FirebaseConstants.userPosts)
         .orderBy("dateTime", descending: true)
         .snapshots()
         .map(
@@ -84,15 +289,12 @@ class PostRepo extends BasePostRepo {
   }
 
   @override
-  Stream<List<Future<CommentModel?>>> getPostComment({
-    required String postId,
-  }) {
-    final commentCollection = FirebaseConstants.comments;
-    final postCommentsSubCollection = FirebaseConstants.postComments;
+  Stream<List<Future<CommentModel?>>> getPostCommentsStream(
+      {required String postId}) {
     return _firebaseFirestore
-        .collection(commentCollection)
+        .collection(FirebaseConstants.comments)
         .doc(postId)
-        .collection(postCommentsSubCollection)
+        .collection(FirebaseConstants.postComments)
         .orderBy("dateTime", descending: false)
         .snapshots()
         .map(
@@ -106,45 +308,60 @@ class PostRepo extends BasePostRepo {
         );
   }
 
+  Future<CommentModel?> getLastPostComment({
+    required String postId,
+  }) async {
+    QuerySnapshot commentsSnap = await _firebaseFirestore
+        .collection(FirebaseConstants.comments)
+        .doc(postId)
+        .collection(FirebaseConstants.postComments)
+        .orderBy("dateTime", descending: true)
+        .limit(1)
+        .get();
+
+    if (commentsSnap.size == 0) {
+      return null;
+    }
+
+    final futureComment = CommentModel.fromDocument(commentsSnap.docs.first);
+    return futureComment;
+  }
+
   @override
   Future<List<PostModel?>> getUserFeed({
     required String userId,
     String? lastPostId,
   }) async {
-    final feeds = FirebaseConstants.feeds;
-    final userFeed = FirebaseConstants.userFeed;
     //paginating logic
     QuerySnapshot postsSnap;
     if (lastPostId == null) {
       postsSnap = await _firebaseFirestore
-          .collection(feeds)
+          .collection(FirebaseConstants.feeds)
           .doc(userId)
-          .collection(userFeed)
+          .collection(FirebaseConstants.userFeed)
           .orderBy("dateTime", descending: true)
           .limit(FirebaseConstants.postToLoad)
           .get();
     } else {
       final lastPostDoc = await _firebaseFirestore
-          .collection(feeds)
+          .collection(FirebaseConstants.feeds)
           .doc(userId)
-          .collection(userFeed)
+          .collection(FirebaseConstants.userFeed)
           .doc(lastPostId)
           .get();
       if (!lastPostDoc.exists) {
         return [];
       }
       postsSnap = await _firebaseFirestore
-          .collection(feeds)
+          .collection(FirebaseConstants.feeds)
           .doc(userId)
-          .collection(userFeed)
+          .collection(FirebaseConstants.userFeed)
           .orderBy("dateTime", descending: true)
           .startAfterDocument(lastPostDoc)
           .limit(FirebaseConstants.postToLoad)
           .get();
     }
 
-    // final postSnap = await _firebaseFirestore.collection(feeds).doc(userId).collection(userFeed).orderBy("dateTime", descending: true).get();
-    //here if use does not use future.wait we get only List<Future<PostModel>>
     final futurePostList = Future.wait(
         postsSnap.docs.map((post) => PostModel.fromDocument(post)).toList());
     return futurePostList;
@@ -184,8 +401,6 @@ class PostRepo extends BasePostRepo {
           .get();
     }
 
-    // final postSnap = await _firebaseFirestore.collection(feeds).doc(userId).collection(userFeed).orderBy("dateTime", descending: true).get();
-    //here if use does not use future.wait we get only List<Future<PostModel>>
     final futurePostList = Future.wait(
         postsSnap.docs.map((post) => PostModel.fromDocument(post)).toList());
     return futurePostList;
@@ -193,45 +408,45 @@ class PostRepo extends BasePostRepo {
 
   @override
   void createLike({
-    required PostModel postModel,
+    required PostModel post,
     required String userId,
   }) async {
-    final likes = FirebaseConstants.likes;
-    final postLikes = FirebaseConstants.postLikes;
-    final posts = FirebaseConstants.posts;
-    //  updating the post doc with likes
-    //we use here field value because if we use ("likes" : postModel.likes +1 ) it cannot handle concurrent like case
+    // updating the post doc with likes
+    // we use here field value because if we use ("likes" : postModel.likes +1 ) it cannot handle concurrent like case
     _firebaseFirestore
-        .collection(posts)
-        .doc(postModel.id)
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .doc(post.id)
         .update({"likes": FieldValue.increment(1)});
-    //keeping the userId in postLikes Sub collection of like collection with post id
+
+    // keeping the userId in postLikes Sub collection of like collection with post id
     _firebaseFirestore
-        .collection(likes)
-        .doc(postModel.id)
-        .collection(postLikes)
+        .collection(FirebaseConstants.likes)
+        .doc(post.id)
+        .collection(FirebaseConstants.postLikes)
         .doc(userId)
         .set({});
   }
 
   @override
   void deleteLike({
-    required String postId,
+    required PostModel post,
     required String userId,
   }) {
-    final likes = FirebaseConstants.likes;
-    final postLikes = FirebaseConstants.postLikes;
-    final posts = FirebaseConstants.posts;
     //decrementing the likes from post document
     _firebaseFirestore
-        .collection(posts)
-        .doc(postId)
+        .collection(FirebaseConstants.posts)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userPosts)
+        .doc(post.id)
         .update({"likes": FieldValue.increment(-1)});
+
     //deleting userId from postLikes collection
     _firebaseFirestore
-        .collection(likes)
-        .doc(postId)
-        .collection(postLikes)
+        .collection(FirebaseConstants.likes)
+        .doc(post.id)
+        .collection(FirebaseConstants.postLikes)
         .doc(userId)
         .delete();
   }
@@ -241,9 +456,6 @@ class PostRepo extends BasePostRepo {
     required String userId,
     required List<PostModel?> posts,
   }) async {
-    //getting all ids of posts which  the user liked
-    final likesCollection = FirebaseConstants.likes;
-    final postLikesCollection = FirebaseConstants.postLikes;
     final postIds = <String>{};
     for (final post in posts) {
       if (post == null) {
@@ -251,12 +463,12 @@ class PostRepo extends BasePostRepo {
       }
 
       final likedDoc = await _firebaseFirestore
-          .collection(likesCollection)
+          .collection(FirebaseConstants.likes)
           .doc(post.id)
-          .collection(postLikesCollection)
+          .collection(FirebaseConstants.postLikes)
           .doc(userId)
           .get();
-      //getting if userId exists in postLikesCollection if so added that is on postIds SET
+
       if (likedDoc.exists) {
         postIds.add(post.id!);
       }

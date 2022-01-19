@@ -1,9 +1,12 @@
+import 'package:bot_toast/bot_toast.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:megaspice/blocs/blocs.dart';
 import 'package:megaspice/blocs/post_bloc/post_cubit.dart';
 import 'package:megaspice/cubit/cubits.dart';
 import 'package:megaspice/models/models.dart';
+import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
 
 class PostScreenArgs {
   final PostModel post;
@@ -41,25 +44,35 @@ class _PostScreenState extends State<PostScreen> {
         return Scaffold(
           appBar: AppBar(
             title: Text(state.post.author.username ?? "" + " photo"),
-            centerTitle: true,
-            actions: [],
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () {
+                context.read<NavBarCubit>().showNavBar();
+                Navigator.of(context).pop();
+              },
+            ),
           ),
-          body: Dialog(
-              child: Stack(
+          body: Stack(
             children: [
-              CachedNetworkImage(
-                height: MediaQuery.of(context).size.height,
-                width: double.infinity,
-                imageUrl: state.post.imageUrl,
-                fit: BoxFit.cover,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CachedNetworkImage(
+                  width: double.infinity,
+                  imageUrl: state.post.imageUrl,
+                  fit: BoxFit.fitWidth,
+                ),
               ),
               Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: EdgeInsets.all(0.0),
                   child: IconButton(
                     onPressed: () {
-                      context.read<PostCubit>().likePost();
+                      if (context.read<AuthBloc>().state.user.uid.isEmpty) {
+                        BotToast.showText(text: "login to like");
+                      } else {
+                        context.read<PostCubit>().likePost();
+                      }
                     },
                     icon: state.isLiked
                         ? const Icon(Icons.favorite, color: Colors.red)
@@ -69,7 +82,7 @@ class _PostScreenState extends State<PostScreen> {
                 ),
               )
             ],
-          )),
+          ),
         );
       }),
     );

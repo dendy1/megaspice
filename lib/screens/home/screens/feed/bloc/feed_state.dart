@@ -16,7 +16,7 @@ class FeedState extends Equatable {
   });
 
   factory FeedState.initial() {
-    return const FeedState(
+    return FeedState(
       posts: [],
       status: FeedStatus.initial,
       failure: Failure(),

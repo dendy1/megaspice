@@ -11,6 +11,7 @@ class FirebaseConstants {
   static const String likes = "likes";
 
   /// Sub Collections
+  static const String userPosts = "userPosts";
   static const String postComments = "postComments";
 
   static const String userFollowers = "userFollowers";
@@ -22,4 +23,6 @@ class FirebaseConstants {
   // Other constants
   static const String guestFeed = "guestFeed";
   static const int postToLoad = 5;
+  static const int commentToLoad = 5;
+  static const int commentsUnderPost = 2;
 }

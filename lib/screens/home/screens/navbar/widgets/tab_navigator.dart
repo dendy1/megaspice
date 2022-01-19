@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:megaspice/blocs/auth_bloc/auth_bloc.dart';
 import 'package:megaspice/blocs/blocs.dart';
 import 'package:megaspice/config/custom_router.dart';
-import 'package:http/http.dart' as http;
+import 'package:megaspice/cubit/comment_post_cubit/comment_post_cubit.dart';
 import 'package:megaspice/cubit/like_post_cubit/like_post_cubit.dart';
 import 'package:megaspice/repositories/post/post_repository.dart';
 import 'package:megaspice/repositories/repositories.dart';
@@ -11,6 +11,7 @@ import 'package:megaspice/screens/auth/login/login_screen.dart';
 import 'package:megaspice/screens/home/screens/create_post/cubit/create_post_cubit.dart';
 import 'package:megaspice/screens/home/screens/feed/bloc/feed_bloc.dart';
 import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
+import 'package:megaspice/screens/home/screens/profile/profile_bloc/profile_bloc.dart';
 
 import '../../screens.dart';
 
@@ -53,6 +54,7 @@ class TabNavigator extends StatelessWidget {
                 postRepo: context.read<PostRepo>(),
                 authBloc: context.read<AuthBloc>(),
                 likePostCubit: context.read<LikePostCubit>(),
+                commentPostCubit: context.read<CommentPostCubit>(),
               )..add(FeedFetchEvent()),
               child: FeedScreen(),
             );
@@ -92,6 +94,7 @@ class TabNavigator extends StatelessWidget {
                   authBloc: context.read<AuthBloc>(),
                   postRepo: context.read<PostRepo>(),
                   likePostCubit: context.read<LikePostCubit>(),
+                  commentPostCubit: context.read<CommentPostCubit>(),
                 )..add(
                     ProfileLoadEvent(
                       userId: context.read<AuthBloc>().state.user.uid,

@@ -17,9 +17,46 @@ class UserRepo extends BaseUserRepo {
     if (user == null) {
       return;
     }
-    _firebaseFirestore.collection(FirebaseConstants.users).doc(user.uid).set(
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.users)
+        .doc(user.uid)
+        .get()
+        .then((value) {
+      if (value.exists) {
+        var updatedUser = User.fromDocument(value).copyWith(photo: user.photo);
+        _firebaseFirestore
+            .collection(FirebaseConstants.users)
+            .doc(user.uid)
+            .update(updatedUser.toDocument());
+      } else {
+        _firebaseFirestore
+            .collection(FirebaseConstants.users)
+            .doc(user.uid)
+            .set(user.toDocument());
+      }
+    });
+  }
+
+  @override
+  Future<void> disableUser({
+    required User? user,
+  }) async {
+    if (user == null) {
+      return;
+    }
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.users)
+        .doc(user.uid)
+        .update(
           user.toDocument(),
         );
+
+    await _firebaseFirestore
+        .collection(FirebaseConstants.feeds)
+        .doc(user.uid)
+        .delete();
   }
 
   @override
@@ -107,7 +144,8 @@ class UserRepo extends BaseUserRepo {
     // Feed Logic
     final followUserPostsRef = _firebaseFirestore
         .collection(FirebaseConstants.posts)
-        .where('author', isEqualTo: followUserRef);
+        .doc(followUserId)
+        .collection(FirebaseConstants.userPosts);
     final userFeedRef = _firebaseFirestore
         .collection(FirebaseConstants.feeds)
         .doc(userId)
@@ -166,7 +204,8 @@ class UserRepo extends BaseUserRepo {
         .collection(FirebaseConstants.feeds)
         .doc(userId)
         .collection(FirebaseConstants.userFeed)
-        .where('author', isEqualTo: followUserRef).get();
+        .where('author', isEqualTo: followUserRef)
+        .get();
 
     userFeedSnapshots.docs.forEach((element) {
       if (element.exists) {

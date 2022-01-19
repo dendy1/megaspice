@@ -11,6 +11,8 @@ class User extends Equatable {
   final DateTime? dateOfBirth;
   final int? followers;
   final int? following;
+  final int? posts;
+  final bool? disabled;
 
   const User({
     required this.uid,
@@ -22,6 +24,8 @@ class User extends Equatable {
     this.dateOfBirth,
     this.followers,
     this.following,
+    this.posts,
+    this.disabled,
   });
 
   static const empty = User(
@@ -34,9 +38,12 @@ class User extends Equatable {
     dateOfBirth: null,
     followers: 0,
     following: 0,
+    posts: 0,
+    disabled: false,
   );
 
   bool get isEmpty => this == User.empty;
+
   bool get isNotEmpty => this != User.empty;
 
   User copyWith({
@@ -49,6 +56,8 @@ class User extends Equatable {
     DateTime? dateOfBirth,
     int? followers,
     int? following,
+    int? postsCount,
+    bool? disabled,
   }) {
     return new User(
       uid: id ?? this.uid,
@@ -60,37 +69,82 @@ class User extends Equatable {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       followers: followers ?? this.followers,
       following: following ?? this.following,
+      posts: postsCount ?? this.posts,
+      disabled: disabled ?? this.disabled,
     );
   }
 
   @override
-  List<Object?> get props => [uid, username, email, photo, displayName, gender, dateOfBirth, followers, following];
+  List<Object?> get props => [
+        uid,
+        username,
+        email,
+        photo,
+        displayName,
+        gender,
+        dateOfBirth,
+        followers,
+        following,
+        posts,
+        disabled
+      ];
 
   Map<String, dynamic> toDocument() {
-    return {
-      'uid': uid,
-      'username': username ?? '',
-      'email': email ?? '',
-      'photo': photo ?? '',
-      'name': displayName ?? '',
-      'gender': gender ?? '',
-      'dateOfBirth': dateOfBirth ?? '',
-      'followers': followers ?? 0,
-      'following': following ?? 0,
-    };
+    if (dateOfBirth == null) {
+      return {
+        'uid': uid,
+        'username': username ?? '',
+        'email': email ?? '',
+        'photo': photo ?? '',
+        'name': displayName ?? '',
+        'gender': gender ?? '',
+        'followers': followers ?? 0,
+        'following': following ?? 0,
+        'posts': posts ?? 0,
+        'disabled': disabled ?? false,
+      };
+    } else {
+      return {
+        'uid': uid,
+        'username': username ?? '',
+        'email': email ?? '',
+        'photo': photo ?? '',
+        'name': displayName ?? '',
+        'gender': gender ?? '',
+        'dateOfBirth': dateOfBirth,
+        'followers': followers ?? 0,
+        'following': following ?? 0,
+        'posts': posts ?? 0,
+        'disabled': disabled ?? false,
+      };
+    }
   }
 
   factory User.fromDocument(DocumentSnapshot doc) {
+    var dateOfBirth = null;
+    try {
+      dateOfBirth = DateTime.fromMillisecondsSinceEpoch(
+          (doc.get('dateOfBirth') as Timestamp).millisecondsSinceEpoch);
+    } catch (e) {}
+
+    var disabled = false;
+    try {
+      disabled = doc.get('disabled');
+    } catch (e) {}
+
+
     return User(
       uid: doc.id,
       username: doc.get('username'),
-      email: doc.get('email') ,
+      email: doc.get('email'),
       photo: doc.get('photo'),
       displayName: doc.get('name'),
       gender: doc.get('gender'),
-      //dateOfBirth: doc.get('dateOfBirth'),
+      dateOfBirth: dateOfBirth,
       following: doc.get('following'),
       followers: doc.get('followers'),
+      posts: doc.get('posts'),
+      disabled: disabled,
     );
   }
 }

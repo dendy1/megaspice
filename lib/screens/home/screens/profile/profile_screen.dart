@@ -1,11 +1,14 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:megaspice/blocs/blocs.dart';
+import 'package:megaspice/cubit/comment_post_cubit/comment_post_cubit.dart';
 import 'package:megaspice/cubit/like_post_cubit/like_post_cubit.dart';
 import 'package:megaspice/repositories/repositories.dart';
 import 'package:megaspice/widgets/widgets.dart';
 
+import 'profile_bloc/profile_bloc.dart';
 import 'widgets/widgets.dart';
 
 class ProfileScreenArgs {
@@ -27,6 +30,7 @@ class ProfileScreen extends StatefulWidget {
           userRepo: context.read<UserRepo>(),
           authBloc: context.read<AuthBloc>(),
           postRepo: context.read<PostRepo>(),
+          commentPostCubit: context.read<CommentPostCubit>(),
           likePostCubit: context.read<LikePostCubit>(),
         )..add(ProfileLoadEvent(userId: args.userId)),
         child: ProfileScreen(),
@@ -39,6 +43,31 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        var status = context.read<ProfileBloc>().state.status;
+        if (_scrollController.offset >=
+                _scrollController.position.maxScrollExtent * 0.75 &&
+            !_scrollController.position.outOfRange &&
+            status != ProfileStatus.paginating &&
+            status != ProfileStatus.failure) {
+          context.read<ProfileBloc>().add(ProfilePaginateEvent(
+              userId: context.read<ProfileBloc>().state.user.uid));
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _scrollController..dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
@@ -49,6 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           BotToast.closeAllLoading();
           BotToast.showText(text: profileState.failure.message);
           //showing the error dialog if error exists
+
           showDialog(
             context: context,
             builder: (context) {
@@ -76,13 +106,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text(profileState.user.username ?? "no username"),
             centerTitle: true,
             actions: [
-              if (profileState.isCurrentUser != null && profileState.isCurrentUser!)
+              if (profileState.isCurrentUser != null &&
+                  profileState.isCurrentUser!)
                 IconButton(
                   onPressed: () {
-                    context.read<AuthBloc>().add(AuthLogoutRequestedEvent());
-                    context.read<LikePostCubit>().clearAllLikedPost();
+                    showModalBottomSheet(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                        context: context,
+                        builder: (context) =>
+                            _buildProfileModal(context, profileState));
                   },
-                  icon: Icon(Icons.exit_to_app),
+                  icon: Icon(FontAwesomeIcons.bars),
                 )
             ],
           ),
@@ -97,79 +133,231 @@ class _ProfileScreenState extends State<ProfileScreen> {
               return; //true return will remove refresh indicator go away
             },
             child: CustomScrollView(
+              controller: _scrollController,
               slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            UserProfileImage(
-                              radius: 40,
-                              profileImageURL: profileState.user.photo,
-                            ),
-                            ProfileInfo(
-                              fullName: profileState.user.displayName ??
-                                  "",
-                              gender: profileState.user.gender ??
-                                  "",
-                              dateOfBirth: profileState.user.dateOfBirth == null ? "" : profileState.user.dateOfBirth.toString(),
-                            ),
-                            ProfileStats(
-                              isCurrentUser: profileState.isCurrentUser,
-                              isFollowing: profileState.isFollowing,
-                              posts: profileState.posts.length,
-                              followers: profileState.user.followers ?? 0,
-                              following: profileState.user.following ?? 0,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16,),
-                        Divider(
-                          height: 0,
-                          thickness: 2,
-                          indent: 0,
-                          endIndent: 0,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final post = profileState.posts[index];
-                      if (post == null) {
-                        return null;
-                      }
-                      final likedPostState =
-                          context.watch<LikePostCubit>().state;
-                      final isLiked =
-                          likedPostState.likedPostIds.contains(post.id);
-                      return PostView(
-                        post: post,
-                        isLiked: isLiked,
-                        onLike: () {
-                          if (isLiked) {
-                            context
-                                .read<LikePostCubit>()
-                                .unLikePost(postModel: post);
-                          } else {
-                            context
-                                .read<LikePostCubit>()
-                                .likePost(postModel: post);
-                          }
-                        },
-                      );
-                    },
-                    childCount: profileState.posts.length,
-                  ),
-                ),
+                _buildProfileHeader(profileState),
+                _buildProfilePosts(profileState),
               ],
             ),
           ),
         );
     }
+  }
+
+  Widget _buildProfileModal(BuildContext context, ProfileState state) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.copy,
+                    size: 24.0,
+                    color: Colors.black,
+                  ),
+                  SizedBox(
+                    width: 24.0,
+                  ),
+                  Text(
+                    " Copy Link",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (!state.isCurrentUser!)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.solidFlag,
+                      size: 24.0,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Report",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 24.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (state.isCurrentUser!)
+            Divider(
+              thickness: 2,
+            ),
+          if (state.isCurrentUser!)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.read<AuthBloc>().add(AuthLogoutRequestedEvent());
+                context.read<LikePostCubit>().clearAllLikedPost();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.exit_to_app,
+                      size: 24.0,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Logout",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 24.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(ProfileState state) {
+    return SliverToBoxAdapter(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                UserProfileImage(
+                  radius: 40,
+                  profileImageURL: state.user.photo,
+                ),
+                SizedBox(
+                  width: 16,
+                ),
+                ProfileInfo(
+                  fullName: state.user.displayName ?? "",
+                  gender: state.user.gender ?? "",
+                  dateOfBirth: state.user.dateOfBirth,
+                ),
+                Spacer(),
+                ProfileStats(
+                  isCurrentUser: state.isCurrentUser,
+                  isFollowing: state.isFollowing,
+                  posts: state.user.posts ?? 0,
+                  followers: state.user.followers ?? 0,
+                  following: state.user.following ?? 0,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+            child: ProfileButton(
+              isCurrentUser: state.isCurrentUser,
+              isFollowing: state.isFollowing,
+            ),
+          ),
+          Divider(
+            thickness: 2,
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfilePosts(ProfileState state) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final post = state.posts[index];
+          if (post == null) {
+            return null;
+          }
+          final commentPostState = context.watch<CommentPostCubit>().state;
+          final likedPostState = context.watch<LikePostCubit>().state;
+          final isLiked = likedPostState.likedPostIds.contains(post.id);
+          return PostView(
+            postAuthor:
+                post.author.uid == context.read<AuthBloc>().state.user.uid,
+            post: post,
+            lastComment: commentPostState.comments.containsKey(post.id)
+                ? commentPostState.comments[post.id]
+                : null,
+            isLiked: isLiked,
+            likes: likedPostState.postsLikes.containsKey(post.id)
+                ? likedPostState.postsLikes[post.id]
+                : null,
+            comments: commentPostState.commentsCount.containsKey(post.id)
+                ? commentPostState.commentsCount[post.id]
+                : null,
+            onLike: () {
+              if (context.read<AuthBloc>().state.user.uid.isEmpty) {
+                BotToast.showText(text: "login to like");
+              } else {
+                if (isLiked) {
+                  context.read<LikePostCubit>().unLikePost(post: post);
+                } else {
+                  context.read<LikePostCubit>().likePost(post: post);
+                }
+              }
+            },
+            onPostDelete: () {
+              showDialog(
+                  context: context,
+                  builder: (dialogContext) {
+                    return ConfirmationDialog(
+                        message: "This post will be deleted",
+                        cancelText: "Abort",
+                        continueText: "Delete",
+                        cancelOnPressed: () {
+                          Navigator.of(dialogContext).pop();
+                        },
+                        continueOnPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context
+                              .read<ProfileBloc>()
+                              .add(ProfileDeletePostEvent(post: post));
+                        });
+                  });
+            },
+          );
+        },
+        childCount: state.posts.length,
+      ),
+    );
   }
 }

@@ -19,8 +19,8 @@ class NavBar extends StatelessWidget {
 
   final Map<NavBarItem, GlobalKey<NavigatorState>> navigatorKeys = {
     NavBarItem.feed: GlobalKey<NavigatorState>(),
-    NavBarItem.create: GlobalKey<NavigatorState>(),
     NavBarItem.profile: GlobalKey<NavigatorState>(),
+    NavBarItem.create: GlobalKey<NavigatorState>(),
   };
 
   final Map<NavBarItem, IconData> items = {
@@ -31,26 +31,31 @@ class NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NavBarCubit, NavBarState>(builder: (context, state) {
-      return Scaffold(
-        body: Stack(
-          children: items
-              .map((item, _) => MapEntry(item,
-                  _buildOffstageNavigator(item, item == state.selectedItem)))
-              .values
-              .toList(),
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          items: items,
-          onTap: (index) {
-            final selectedItem = NavBarItem.values[index];
-            _selectedBottomNavItem(
-                context, selectedItem, selectedItem == state.selectedItem);
-          },
-          selectedItem: state.selectedItem,
-        ),
-      );
-    });
+    return BlocBuilder<NavBarCubit, NavBarState>(
+      buildWhen: (prev, curr) => true,
+      builder: (context, state) {
+        return Scaffold(
+          body: Stack(
+            children: items
+                .map((item, _) => MapEntry(item,
+                    _buildOffstageNavigator(item, item == state.selectedItem)))
+                .values
+                .toList(),
+          ),
+          bottomNavigationBar: state.show
+              ? CustomBottomNavBar(
+                  items: items,
+                  onTap: (index) {
+                    final selectedItem = NavBarItem.values[index];
+                    _selectedBottomNavItem(context, selectedItem,
+                        selectedItem == state.selectedItem);
+                  },
+                  selectedItem: state.selectedItem,
+                )
+              : SizedBox(),
+        );
+      },
+    );
   }
 
   void _selectedBottomNavItem(

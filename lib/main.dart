@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:megaspice/config/bloc_observer.dart';
+import 'package:megaspice/cubit/comment_post_cubit/comment_post_cubit.dart';
 import 'package:megaspice/cubit/like_post_cubit/like_post_cubit.dart';
 import 'package:megaspice/repositories/repositories.dart';
 import 'package:megaspice/screens/home/screens/comment/bloc/comment_bloc.dart';
 import 'package:megaspice/screens/home/screens/create_post/cubit/create_post_cubit.dart';
 import 'package:megaspice/screens/home/screens/profile/edit_profile/cubit/edit_profile_cubit.dart';
+import 'package:megaspice/screens/home/screens/profile/profile_bloc/profile_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'blocs/blocs.dart';
@@ -31,7 +33,7 @@ void main() async {
       authenticationRepository: authRepo,
       onboardingFinished: onboardingFinished ?? false,
     )),
-    blocObserver: AppBlocObserver(),
+    //blocObserver: AppBlocObserver(),
   );
 }
 
@@ -78,9 +80,15 @@ class MyApp extends StatelessWidget {
               context.read<UserRepo>(),
             ),
           ),
+          BlocProvider<CommentPostCubit>(
+            create: (context) => CommentPostCubit(
+              postRepo: context.read<PostRepo>(),
+              authBloc: context.read<AuthBloc>(),
+            ),
+          ),
           BlocProvider<LikePostCubit>(
             create: (context) => LikePostCubit(
-              postRepository: context.read<PostRepo>(),
+              postRepo: context.read<PostRepo>(),
               authBloc: context.read<AuthBloc>(),
             ),
           ),
@@ -90,29 +98,49 @@ class MyApp extends StatelessWidget {
               postRepo: context.read<PostRepo>(),
               userRepo: context.read<UserRepo>(),
               likePostCubit: context.read<LikePostCubit>(),
+              commentPostCubit: context.read<CommentPostCubit>(),
             ),
           ),
           BlocProvider<CommentBloc>(
             create: (context) => CommentBloc(
               authBloc: context.read<AuthBloc>(),
               postRepo: context.read<PostRepo>(),
+              commentPostCubit: context.read<CommentPostCubit>(),
             ),
           ),
           BlocProvider<CreatePostCubit>(
             create: (context) => CreatePostCubit(
-                authBloc: context.read<AuthBloc>(),
-                postRepo: context.read<PostRepo>(),
-                storageRepo: context.read<StorageRepo>()),
+              authBloc: context.read<AuthBloc>(),
+              postRepo: context.read<PostRepo>(),
+              storageRepo: context.read<StorageRepo>(),
+            ),
           ),
           BlocProvider<EditProfileCubit>(
             create: (context) => EditProfileCubit(
-                userRepo: context.read<UserRepo>(),
-                storageRepo: context.read<StorageRepo>(),
-                profileBloc: context.read<ProfileBloc>()),
+              userRepo: context.read<UserRepo>(),
+              storageRepo: context.read<StorageRepo>(),
+              profileBloc: context.read<ProfileBloc>(),
+            ),
           ),
         ],
         child: MaterialApp(
           title: "MegaSpice",
+          theme: ThemeData(
+            appBarTheme: AppBarTheme(
+              elevation: 2.0,
+              color: Colors.white,
+              centerTitle: true,
+              titleTextStyle: TextStyle(
+                color: Color.fromRGBO(51, 51, 51, 1),
+                fontFamily: 'Roboto',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              iconTheme: IconThemeData(
+                color: Color.fromRGBO(51, 51, 51, 1),
+              ),
+            ),
+          ),
           debugShowCheckedModeBanner: false,
           builder: BotToastInit(),
           navigatorObservers: [

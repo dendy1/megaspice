@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:megaspice/blocs/blocs.dart';
+import 'package:megaspice/screens/home/screens/profile/profile_bloc/profile_bloc.dart';
 import 'package:megaspice/screens/home/screens/screens.dart';
 
 class ProfileButton extends StatelessWidget {
@@ -18,38 +19,43 @@ class ProfileButton extends StatelessWidget {
       return SizedBox();
     }
     return isCurrentUser!
-        ? TextButton(
-            style: TextButton.styleFrom(backgroundColor: Colors.blue),
-            onPressed: () => Navigator.of(context).pushNamed(
+        ? _buildButton('Edit Profile', () {
+            Navigator.of(context).pushNamed(
               EditProfileScreen.routeName,
               arguments: EditProfileScreenArgs(context: context),
+            );
+          })
+        : _buildButton(isFollowing ? 'Unfollow' : 'Follow', () {
+            isFollowing
+                ? context.read<ProfileBloc>().add(
+                      ProfileUnfollowUserEvent(),
+                    )
+                : context.read<ProfileBloc>().add(
+                      ProfileFollowUserEvent(),
+                    );
+            ;
+          });
+  }
+
+  Widget _buildButton(String text, VoidCallback onPressedCallback) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        child: Text(text, style: TextStyle(fontSize: 14)),
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+          backgroundColor: MaterialStateProperty.all<Color>(
+              Color.fromARGB(255, 128, 163, 255)),
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5.0),
             ),
-            child: const Text(
-              'Edit Profile',
-              style: const TextStyle(fontSize: 16, color: Colors.white),
-            ),
-          )
-        : TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: isFollowing
-                  ? Colors.grey[300]
-                  : Theme.of(context).primaryColor,
-            ),
-            onPressed: () {
-              isFollowing
-                  ? context.read<ProfileBloc>().add(
-                        ProfileUnfollowUserEvent(),
-                      )
-                  : context.read<ProfileBloc>().add(
-                        ProfileFollowUserEvent(),
-                      );
-            },
-            child: Text(
-              isFollowing ? 'Unfollow' : 'Follow',
-              style: TextStyle(
-                  fontSize: 16,
-                  color: isFollowing ? Colors.black : Colors.white),
-            ),
-          );
+          ),
+          elevation: MaterialStateProperty.all<double>(4.0),
+        ),
+        onPressed: () => onPressedCallback(),
+      ),
+    );
   }
 }

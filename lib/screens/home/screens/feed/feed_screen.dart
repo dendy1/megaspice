@@ -1,15 +1,17 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:megaspice/blocs/auth_bloc/auth_bloc.dart';
 import 'package:megaspice/cubit/cubits.dart';
 import 'package:megaspice/models/models.dart';
 import 'package:megaspice/repositories/repositories.dart';
+import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
 import 'package:megaspice/widgets/widgets.dart';
 
 import 'bloc/feed_bloc.dart';
 
 class FeedScreen extends StatefulWidget {
-   @override
+  @override
   State<FeedScreen> createState() => _FeedScreenState();
 }
 
@@ -22,7 +24,11 @@ class _FeedScreenState extends State<FeedScreen> {
     _scrollController = ScrollController()
       ..addListener(() {
         var status = context.read<FeedBloc>().state.status;
-        if (_scrollController.offset >= _scrollController.position.maxScrollExtent * 0.75 && !_scrollController.position.outOfRange && status != FeedStatus.paginating && status != FeedStatus.failure) {
+        if (_scrollController.offset >=
+                _scrollController.position.maxScrollExtent * 0.75 &&
+            !_scrollController.position.outOfRange &&
+            status != FeedStatus.paginating &&
+            status != FeedStatus.failure) {
           context.read<FeedBloc>().add(FeedPaginateEvent());
         }
       });
@@ -30,8 +36,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   void dispose() {
-    _scrollController
-      ..dispose();
+    _scrollController..dispose();
     super.dispose();
   }
 
@@ -45,15 +50,12 @@ class _FeedScreenState extends State<FeedScreen> {
             builder: (context) =>
                 ErrorDialog(message: feedState.failure.message),
           );
-        } else if (feedState.status == FeedStatus.paginating) {
-          //BotToast.showText(text: "fetching more posts");
-          //BotToast.showLoading();
-        }
+        } else if (feedState.status == FeedStatus.paginating) {}
       },
       builder: (context, feedState) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text("MegaSpice"),
+            title: Text("Feed"),
             actions: [
               if (feedState.posts.isEmpty &&
                   feedState.status == FeedStatus.loaded)
@@ -99,22 +101,54 @@ class _FeedScreenState extends State<FeedScreen> {
                     if (post == null) {
                       return SizedBox();
                     }
+                    final commentPostState =
+                        context.watch<CommentPostCubit>().state;
                     final likedPostState = context.watch<LikePostCubit>().state;
                     final isLiked =
                         likedPostState.likedPostIds.contains(post.id);
                     return PostView(
+                      postAuthor: post.author.uid ==
+                          context.read<AuthBloc>().state.user.uid,
                       post: post,
+                      lastComment:
+                          commentPostState.comments.containsKey(post.id)
+                              ? commentPostState.comments[post.id]
+                              : null,
                       isLiked: isLiked,
+                      likes: likedPostState.postsLikes.containsKey(post.id)
+                          ? likedPostState.postsLikes[post.id]
+                          : null,
+                      comments:
+                          commentPostState.commentsCount.containsKey(post.id)
+                              ? commentPostState.commentsCount[post.id]
+                              : null,
                       onLike: () {
-                        if (isLiked) {
-                          context
-                              .read<LikePostCubit>()
-                              .unLikePost(postModel: post);
+                        if (context.read<AuthBloc>().state.user.uid.isEmpty) {
+                          BotToast.showText(text: "login to like");
                         } else {
-                          context
-                              .read<LikePostCubit>()
-                              .likePost(postModel: post);
+                          if (isLiked) {
+                            context
+                                .read<LikePostCubit>()
+                                .unLikePost(post: post);
+                          } else {
+                            context.read<LikePostCubit>().likePost(post: post);
+                          }
                         }
+                      },
+                      onPostDelete: () {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return ConfirmationDialog(
+                                  message: "This post will be deleted",
+                                  cancelText: "Abort",
+                                  continueText: "Delete",
+                                  cancelOnPressed: () =>
+                                      Navigator.of(context).pop,
+                                  continueOnPressed: () => context
+                                      .read<FeedBloc>()
+                                      .add(FeedDeletePostEvent(post: post)));
+                            });
                       },
                     );
                   },

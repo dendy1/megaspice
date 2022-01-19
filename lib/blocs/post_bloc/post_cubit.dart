@@ -17,10 +17,10 @@ class PostCubit extends Cubit<PostState> {
 
   void likePost() {
     if (state.isLiked) {
-      _likePostCubit.unLikePost(postModel: state.post);
+      _likePostCubit.unLikePost(post: state.post);
       emit(state.copyWith(isLiked: false));
     } else {
-      _likePostCubit.likePost(postModel: state.post);
+      _likePostCubit.likePost(post: state.post);
       emit(state.copyWith(isLiked: true));
     }
   }

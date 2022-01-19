@@ -13,6 +13,10 @@ abstract class BaseUserRepo {
     required User user,
   });
 
+  Future<void> disableUser({
+    required User user,
+  });
+
   Future<List<User>> searchUsers({
     required String query,
   });

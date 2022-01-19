@@ -3,21 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:megaspice/extensions/datetime_extensions.dart';
 import 'package:megaspice/models/models.dart';
+import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
 import 'package:megaspice/screens/home/screens/profile/profile_screen.dart';
 import 'package:megaspice/screens/home/screens/screens.dart';
-import 'package:megaspice/widgets/post_dialog.dart';
+import 'package:megaspice/screens/home/screens/post/post_screen.dart';
 import 'package:megaspice/widgets/user_profile_image.dart';
+import 'package:provider/src/provider.dart';
 
 class PostView extends StatelessWidget {
   final PostModel post;
+  final CommentModel? lastComment;
   final bool isLiked;
+  final int? likes;
+  final int? comments;
   final VoidCallback onLike;
+  final VoidCallback onPostDelete;
+
+  final bool postAuthor;
 
   const PostView({
     Key? key,
     required this.isLiked,
+    this.likes = 0,
+    this.comments = 0,
     required this.post,
+    required this.lastComment,
     required this.onLike,
+    required this.postAuthor,
+    required this.onPostDelete,
   }) : super(key: key);
 
   @override
@@ -31,7 +44,7 @@ class PostView extends StatelessWidget {
         _buildContent(context),
         _buildFooter(context),
         _buildCaption(context),
-        // _buildComments(context),
+        _buildComment(context),
         Divider(
           height: 0,
           thickness: 2,
@@ -57,13 +70,101 @@ class PostView extends StatelessWidget {
               child: Text(
                 author.username ?? "unknown",
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            )
+            ),
+            const SizedBox(width: 50.0),
+            IconButton(
+              onPressed: () {
+                showModalBottomSheet(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    context: context,
+                    builder: (context) => _buildPostModal(context));
+              },
+              icon: Icon(FontAwesomeIcons.ellipsisH),
+              iconSize: 24.0,
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPostModal(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.solidFlag,
+                    size: 24.0,
+                    color: Colors.black,
+                  ),
+                  SizedBox(
+                    width: 24.0,
+                  ),
+                  Text(
+                    " Report",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 2,
+          ),
+          if (postAuthor)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onPostDelete();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.solidTrashAlt,
+                      size: 24.0,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Delete",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 24.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -71,6 +172,7 @@ class PostView extends StatelessWidget {
   Widget _buildContent(BuildContext context) {
     return GestureDetector(
       onTap: () async {
+        context.read<NavBarCubit>().hideNavBar();
         Navigator.pushNamed(context, PostScreen.routeName,
             arguments: PostScreenArgs(
               post: post,
@@ -79,10 +181,9 @@ class PostView extends StatelessWidget {
       },
       onDoubleTap: onLike,
       child: CachedNetworkImage(
-        height: MediaQuery.of(context).size.height / 2.25,
         width: double.infinity,
         imageUrl: post.imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.fill,
       ),
     );
   }
@@ -93,22 +194,47 @@ class PostView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          IconButton(
-            onPressed: onLike,
-            icon: isLiked
-                ? const Icon(Icons.favorite, color: Colors.red)
-                : const Icon(Icons.favorite_outline),
-            iconSize: 30.0,
+          Row(
+            children: [
+              IconButton(
+                onPressed: onLike,
+                icon: isLiked
+                    ? const Icon(Icons.favorite, color: Colors.red)
+                    : const Icon(Icons.favorite_outline),
+                iconSize: 30.0,
+              ),
+              Text(
+                '${likes == null ? 0 : likes}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () => Navigator.pushNamed(
-              context,
-              CommentScreen.routeName,
-              arguments: CommentScreenArgs(post: post),
-            ),
-            icon: Icon(FontAwesomeIcons.comment),
-            iconSize: 30.0,
-          )
+          Row(
+            children: [
+              Text(
+                '${comments == null ? 0 : comments}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  context.read<NavBarCubit>().hideNavBar();
+                  Navigator.pushNamed(
+                    context,
+                    CommentScreen.routeName,
+                    arguments: CommentScreenArgs(post: post),
+                  );
+                },
+                icon: Icon(FontAwesomeIcons.comment),
+                iconSize: 30.0,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -116,7 +242,7 @@ class PostView extends StatelessWidget {
 
   Widget _buildCaption(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -127,82 +253,48 @@ class PostView extends StatelessWidget {
             TextSpan(text: " "),
             TextSpan(text: post.caption),
           ])),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8.0),
           Text(
             '${post.dateTime.timeAgoExt()}',
             style: TextStyle(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+                color: Color.fromRGBO(153, 153, 153, 1),
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w600,
+                fontSize: 12.0),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildComments(BuildContext context) {
+  Widget _buildComment(BuildContext context) {
+    if (lastComment == null) {
+      return SizedBox();
+    }
     return Padding(
       padding: EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            "another_user",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          SizedBox(
-            width: 5.0,
-          ),
-          Text(
-            "Nice picture!",
-            style: TextStyle(fontWeight: FontWeight.normal),
-          ),
+      child: Column(
+        children: [
+          Padding(
+              padding: EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    lastComment!.author.username!,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    width: 5.0,
+                  ),
+                  Text(
+                    lastComment!.content,
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  ),
+                ],
+              ))
         ],
       ),
     );
-  }
-}
-
-class PostDial extends StatelessWidget {
-  final PostModel post;
-  final VoidCallback onLike;
-  late bool isLiked;
-
-  PostDial({
-    Key? key,
-    required this.isLiked,
-    required this.post,
-    required this.onLike,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-        child: Stack(
-      children: [
-        CachedNetworkImage(
-          height: MediaQuery.of(context).size.height,
-          width: double.infinity,
-          imageUrl: post.imageUrl,
-          fit: BoxFit.cover,
-        ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: EdgeInsets.all(0.0),
-            child: IconButton(
-              onPressed: () {
-                this.isLiked = !this.isLiked;
-                onLike();
-              },
-              icon: this.isLiked
-                  ? const Icon(Icons.favorite, color: Colors.red)
-                  : const Icon(Icons.favorite_outline),
-              iconSize: 60.0,
-            ),
-          ),
-        )
-      ],
-    ));
   }
 }

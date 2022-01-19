@@ -9,11 +9,20 @@ class NavBarCubit extends Cubit<NavBarState> {
   NavBarCubit()
       : super(NavBarState(
           selectedItem: NavBarItem.feed,
+          show: true,
         ));
 
   void updateSelectedItem(NavBarItem item) {
     if (item != state.selectedItem) {
       emit(NavBarState(selectedItem: item));
     }
+  }
+
+  void showNavBar() {
+    emit(state.copyWith(show: true));
+  }
+
+  void hideNavBar() {
+    emit(state.copyWith(show: false));
   }
 }

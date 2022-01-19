@@ -1,23 +1,39 @@
 import 'package:megaspice/models/models.dart';
 
 abstract class BasePostRepo {
-  Future<void> createPost({required PostModel postModel});
+  Future<void> createPost({
+    required PostModel post,
+  });
+
+  Future<void> deletePost({
+    required PostModel post,
+  });
 
   Future<void> createComment({
-    required PostModel postModel,
-    required CommentModel commentModel,
+    required PostModel post,
+    required CommentModel comment,
+  });
+
+  Future<void> deleteComment({
+    required PostModel post,
+    required CommentModel comment,
   });
 
   void createLike({
-    required PostModel postModel,
+    required PostModel post,
     required String userId,
   });
 
-  Stream<List<Future<PostModel?>>> getUserPosts({
+  Future<List<PostModel?>> getUserPosts({
     required String userId,
+    String lastPostId,
   });
 
-  Stream<List<Future<CommentModel?>>> getPostComment({
+  Stream<List<Future<CommentModel?>>> getPostCommentsStream({
+    required String postId,
+  });
+
+  Future<CommentModel?> getLastPostComment({
     required String postId,
   });
 
@@ -36,7 +52,7 @@ abstract class BasePostRepo {
   });
 
   void deleteLike({
-    required String postId,
+    required PostModel post,
     required String userId,
   });
 }

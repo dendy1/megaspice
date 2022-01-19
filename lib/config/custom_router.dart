@@ -7,7 +7,7 @@ import 'package:megaspice/screens/home/screens/navbar/navbar.dart';
 import 'package:megaspice/screens/home/screens/screens.dart';
 import 'package:megaspice/screens/onboarding/onboarding_screen.dart';
 import 'package:megaspice/screens/splash/splash_screen.dart';
-import 'package:megaspice/widgets/post_dialog.dart';
+import 'package:megaspice/screens/home/screens/post/post_screen.dart';
 
 class CustomRoute {
   static Route onGenerateRoute(RouteSettings settings) {

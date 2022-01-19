@@ -7,52 +7,62 @@ import 'package:megaspice/repositories/post/post_repository.dart';
 part 'like_post_state.dart';
 
 class LikePostCubit extends Cubit<LikePostState> {
-  final PostRepo _postRepository;
+  final PostRepo _postRepo;
   final AuthBloc _authBloc;
 
   LikePostCubit({
-    required PostRepo postRepository,
+    required PostRepo postRepo,
     required AuthBloc authBloc,
-  })  : _postRepository = postRepository,
+  })  : _postRepo = postRepo,
         _authBloc = authBloc,
         super(LikePostState.initial());
 
-  //we can use this method to fetch initial like post while loading initial feed
   void updateLikedPosts({
     required Set<String> postIds,
+    required Map<String, int>? postsLikes,
   }) {
     emit(state.copyWith(
       likedPostIds: Set<String>.from(state.likedPostIds)..addAll(postIds),
+      postsLikes: postsLikes == null ? state.postsLikes : Map<String, int>.from(state.postsLikes)..addAll(postsLikes!),
     ));
   }
 
   void likePost({
-    required PostModel postModel,
+    required PostModel post,
   }) {
-    if (_authBloc.state.user == null) {
+    if (_authBloc.state.user.uid.isEmpty) {
       return;
     }
-    _postRepository.createLike(
-        postModel: postModel, userId: _authBloc.state.user.uid);
+    _postRepo.createLike(post: post, userId: _authBloc.state.user.uid);
+
+    final updatedPostsLikes = Map<String, int>.from(state.postsLikes);
+    if (updatedPostsLikes.containsKey(post.id)) {
+      updatedPostsLikes[post.id!] = updatedPostsLikes[post.id]! + 1;
+    } else {
+      updatedPostsLikes[post.id!] = 1;
+    }
+
     emit(state.copyWith(
-      likedPostIds: Set<String>.from(state.likedPostIds)..add(postModel.id!),
-      recentlyLikedPostsIds: Set<String>.from(state.recentlyLikedPostsIds)
-        ..add(postModel.id!),
+      likedPostIds: Set<String>.from(state.likedPostIds)..add(post.id!),
+      postsLikes: updatedPostsLikes,
     ));
   }
 
   void unLikePost({
-    required PostModel postModel,
+    required PostModel post,
   }) {
-    if (_authBloc.state.user == null) {
+    if (_authBloc.state.user.uid.isEmpty) {
       return;
     }
-    _postRepository.deleteLike(
-        postId: postModel.id!, userId: _authBloc.state.user.uid);
+    _postRepo.deleteLike(post: post, userId: _authBloc.state.user.uid);
+    final updatedPostsLikes = Map<String, int>.from(state.postsLikes);
+    if (updatedPostsLikes.containsKey(post.id)) {
+      updatedPostsLikes[post.id!] = updatedPostsLikes[post.id]! - 1;
+    }
+
     emit(state.copyWith(
-      likedPostIds: Set<String>.from(state.likedPostIds)..remove(postModel.id),
-      recentlyLikedPostsIds: Set<String>.from(state.recentlyLikedPostsIds)
-        ..remove(postModel.id),
+      likedPostIds: Set<String>.from(state.likedPostIds)..remove(post.id),
+      postsLikes: updatedPostsLikes,
     ));
   }
 

@@ -27,12 +27,15 @@ dependencies:
   firebase_core: ^1.11.0
   firebase_analytics: ^9.0.5
   firebase_storage: ^10.2.5
+  firebase_dynamic_links: ^4.0.4
   image_cropper: ^1.4.1
   image_picker: ^0.8.4+4
   uuid: ^3.0.5
   cached_network_image: ^3.2.0
   timeago: ^3.1.0
   intl: ^0.17.0
+  flutter_signin_button: ^2.0.0
+  date_time_picker: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -43,5 +46,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/
+    - assets/icons/
     - assets/onboarding/

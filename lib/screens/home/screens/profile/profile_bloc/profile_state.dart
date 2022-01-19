@@ -1,6 +1,6 @@
 part of 'profile_bloc.dart';
 
-enum ProfileStatus { initial, loading, loaded, failure }
+enum ProfileStatus { initial, loading, paginating, loaded, failure }
 
 class ProfileState extends Equatable {
   final User user;
@@ -20,10 +20,11 @@ class ProfileState extends Equatable {
   });
 
   @override
-  List<Object?> get props => [posts, user, isCurrentUser, isFollowing, status, failure];
+  List<Object?> get props =>
+      [posts, user, isCurrentUser, isFollowing, status, failure];
 
   factory ProfileState.initial() {
-    return const ProfileState(
+    return ProfileState(
       posts: [],
       user: User.empty,
       isFollowing: false,

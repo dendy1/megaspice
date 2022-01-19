@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:authentication_repository/authentication_repository.dart';
+import 'package:authentication_repository/src/models/failures/disable_user_failure.dart';
 import 'package:cache/cache.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -117,6 +118,16 @@ class AuthRepo {
       ]);
     } catch (ex) {
       throw LogOutFailure(ex.toString());
+    }
+  }
+
+  Future<void> disableUser() async {
+    try {
+      await _firebaseAuth.currentUser!.delete();
+      await logOut();
+    } catch (ex) {
+      print(ex.toString());
+      throw DisableUserFailure(ex.toString());
     }
   }
 }
