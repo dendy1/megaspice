@@ -48,6 +48,13 @@ class PostRepo extends BasePostRepo {
 
       _firebaseFirestore
           .collection(FirebaseConstants.feeds)
+          .doc(post.author.uid)
+          .collection(FirebaseConstants.userFeed)
+          .doc(createdPostRef.id)
+          .set(createPostData.data()!);
+
+      _firebaseFirestore
+          .collection(FirebaseConstants.feeds)
           .doc(FirebaseConstants.guestFeed)
           .collection(FirebaseConstants.userFeed)
           .doc(createdPostRef.id)
@@ -89,6 +96,13 @@ class PostRepo extends BasePostRepo {
             .delete();
       }
     });
+
+    _firebaseFirestore
+        .collection(FirebaseConstants.feeds)
+        .doc(post.author.uid)
+        .collection(FirebaseConstants.userFeed)
+        .doc(post.id)
+        .delete();
 
     await _firebaseFirestore
         .collection(FirebaseConstants.feeds)
@@ -288,6 +302,68 @@ class PostRepo extends BasePostRepo {
         );
   }
 
+  Stream<List<Future<PostModel?>>> getUserFeedStream({
+    String? userId,
+    String? lastPostId,
+  }) {
+    if (lastPostId == null) {
+      return _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId == null ? FirebaseConstants.guestFeed : userId)
+          .collection(FirebaseConstants.userPosts)
+          .orderBy("dateTime", descending: true)
+          .limit(FirebaseConstants.postToLoad)
+          .limit(FirebaseConstants.postToLoad)
+          .snapshots()
+          .map(
+            (querySnap) => querySnap.docs
+            .map(
+              (queryDocSnap) => PostModel.fromDocument(queryDocSnap),
+        )
+            .toList(),
+      );
+    } else {
+      final lastPostDoc = _firebaseFirestore
+          .collection(FirebaseConstants.posts)
+          .doc(userId == null ? FirebaseConstants.guestFeed : userId)
+          .collection(FirebaseConstants.userPosts)
+          .doc(lastPostId)
+          .get();
+
+      lastPostDoc.then((doc) {
+        return _firebaseFirestore
+            .collection(FirebaseConstants.posts)
+            .doc(userId == null ? FirebaseConstants.guestFeed : userId)
+            .collection(FirebaseConstants.userPosts)
+            .orderBy("dateTime", descending: true)
+            .startAfterDocument(doc)
+            .limit(FirebaseConstants.postToLoad)
+            .snapshots()
+            .map(
+              (querySnap) => querySnap.docs
+              .map(
+                (queryDocSnap) => PostModel.fromDocument(queryDocSnap),
+          )
+              .toList(),
+        );
+      });
+    }
+
+    return _firebaseFirestore
+        .collection(FirebaseConstants.posts)
+        .doc(userId == null ? FirebaseConstants.guestFeed : userId)
+        .collection(FirebaseConstants.userPosts)
+        .orderBy("dateTime", descending: true)
+        .snapshots()
+        .map(
+          (querySnap) => querySnap.docs
+          .map(
+            (queryDocSnap) => PostModel.fromDocument(queryDocSnap),
+      )
+          .toList(),
+    );
+  }
+
   @override
   Stream<List<Future<CommentModel?>>> getPostCommentsStream(
       {required String postId}) {
@@ -329,7 +405,7 @@ class PostRepo extends BasePostRepo {
 
   @override
   Future<List<PostModel?>> getUserFeed({
-    required String userId,
+    String? userId,
     String? lastPostId,
   }) async {
     //paginating logic
@@ -337,7 +413,7 @@ class PostRepo extends BasePostRepo {
     if (lastPostId == null) {
       postsSnap = await _firebaseFirestore
           .collection(FirebaseConstants.feeds)
-          .doc(userId)
+          .doc(userId == null ? FirebaseConstants.guestFeed : userId)
           .collection(FirebaseConstants.userFeed)
           .orderBy("dateTime", descending: true)
           .limit(FirebaseConstants.postToLoad)
@@ -345,7 +421,7 @@ class PostRepo extends BasePostRepo {
     } else {
       final lastPostDoc = await _firebaseFirestore
           .collection(FirebaseConstants.feeds)
-          .doc(userId)
+          .doc(userId == null ? FirebaseConstants.guestFeed : userId)
           .collection(FirebaseConstants.userFeed)
           .doc(lastPostId)
           .get();
@@ -354,7 +430,7 @@ class PostRepo extends BasePostRepo {
       }
       postsSnap = await _firebaseFirestore
           .collection(FirebaseConstants.feeds)
-          .doc(userId)
+          .doc(userId == null ? FirebaseConstants.guestFeed : userId)
           .collection(FirebaseConstants.userFeed)
           .orderBy("dateTime", descending: true)
           .startAfterDocument(lastPostDoc)

@@ -11,7 +11,6 @@ import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
 import 'package:megaspice/screens/home/screens/profile/profile_bloc/profile_bloc.dart';
 import 'package:megaspice/widgets/widgets.dart';
 
-
 class CreatePostScreen extends StatelessWidget {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -27,8 +26,9 @@ class CreatePostScreen extends StatelessWidget {
         listener: (context, state) {
           if (state.status == CreatePostStatus.success) {
             context.read<NavBarCubit>().updateSelectedItem(NavBarItem.profile);
-            context.read<ProfileBloc>()..add(ProfileLoadEvent(
-                userId: context.read<ProfileBloc>().state.user.uid));
+            context.read<ProfileBloc>()
+              ..add(ProfileLoadEvent(
+                  userId: context.read<ProfileBloc>().state.user.uid));
             Navigator.of(context, rootNavigator: true).pop();
             _formKey.currentState!.reset();
             context.read<CreatePostCubit>().reset();
@@ -61,50 +61,50 @@ class CreatePostScreen extends StatelessWidget {
                 builder: (buildContext) =>
                     _buildSelectImageDialog(buildContext, context)),
             child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height - 150),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (state.status == CreatePostStatus.submitting)
-                          LinearProgressIndicator(),
-                        Container(
-                          padding: EdgeInsets.fromLTRB(0, 20.0, 0, 0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildCaptionInput(context),
-                            ],
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (state.status == CreatePostStatus.submitting)
+                        LinearProgressIndicator(),
+                      Container(
+                        padding: EdgeInsets.fromLTRB(0, 20.0, 0, 0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildCaptionInput(context),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20,),
+                      Container(
+                        width: double.infinity,
+                        color: Colors.grey[200],
+                        child: state.postImage != null
+                            ? Container(
+                          child: Image.file(
+                            state.postImage!,
+                            fit: BoxFit.fitWidth,
+                          ),
+                        )
+                            : Container(
+                          height: MediaQuery.of(context).size.height / 2,
+                          child: Icon(
+                            Icons.image,
+                            color: Colors.grey,
+                            size: 120,
                           ),
                         ),
-                        Container(
-                          height: MediaQuery.of(context).size.height / 2,
-                          width: double.infinity,
-                          color: Colors.grey[200],
-                          child: state.postImage != null
-                              ? Container(
-                                  child: Image.file(
-                                    state.postImage!,
-                                    fit: BoxFit.fitWidth,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.image,
-                                  color: Colors.grey,
-                                  size: 120,
-                                ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.fromLTRB(0, 0, 0, 20.0),
-                          child: _buildPostButton(context, state),
-                        )
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 20,),
+                      Container(
+                        padding: EdgeInsets.fromLTRB(0, 0, 0, 20.0),
+                        child: _buildPostButton(context, state),
+                      )
+                    ],
                   ),
                 ),
               ),
@@ -138,14 +138,10 @@ class CreatePostScreen extends StatelessWidget {
         ),
       ),
       onChanged: (value) {
-        context
-            .read<CreatePostCubit>()
-            .captionChanged(value);
+        context.read<CreatePostCubit>().captionChanged(value);
       },
       validator: (value) {
-        return value!.trim().isEmpty
-            ? 'Caption cannot be empty'
-            : null;
+        return value!.trim().isEmpty ? 'Caption cannot be empty' : null;
       },
     );
   }

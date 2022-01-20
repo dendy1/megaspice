@@ -36,6 +36,8 @@ dependencies:
   intl: ^0.17.0
   flutter_signin_button: ^2.0.0
   date_time_picker: ^2.1.0
+  flutter_blurhash: ^0.6.0
+  flutter_cache_manager: ^3.3.0
 
 dev_dependencies:
   flutter_test:

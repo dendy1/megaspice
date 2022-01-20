@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:megaspice/extensions/datetime_extensions.dart';
 import 'package:megaspice/models/models.dart';
@@ -94,84 +95,9 @@ class PostView extends StatelessWidget {
     );
   }
 
-  Widget _buildPostModal(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.solidFlag,
-                    size: 24.0,
-                    color: Colors.black,
-                  ),
-                  SizedBox(
-                    width: 24.0,
-                  ),
-                  Text(
-                    " Report",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Divider(
-            thickness: 2,
-          ),
-          if (postAuthor)
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onPostDelete();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 16.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.solidTrashAlt,
-                      size: 24.0,
-                      color: Colors.black,
-                    ),
-                    SizedBox(
-                      width: 24.0,
-                    ),
-                    Text(
-                      " Delete",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 24.0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildContent(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         context.read<NavBarCubit>().hideNavBar();
         Navigator.pushNamed(context, PostScreen.routeName,
             arguments: PostScreenArgs(
@@ -181,9 +107,13 @@ class PostView extends StatelessWidget {
       },
       onDoubleTap: onLike,
       child: CachedNetworkImage(
-        width: double.infinity,
+        progressIndicatorBuilder: (context, url, downloadProgress) =>
+            CircularProgressIndicator(value: downloadProgress.progress),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
         imageUrl: post.imageUrl,
-        fit: BoxFit.fill,
+        fit: BoxFit.fitWidth,
+        fadeOutDuration: const Duration(seconds: 1),
+        fadeInDuration: const Duration(seconds: 2),
       ),
     );
   }
@@ -242,7 +172,7 @@ class PostView extends StatelessWidget {
 
   Widget _buildCaption(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -293,6 +223,81 @@ class PostView extends StatelessWidget {
                   ),
                 ],
               ))
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostModal(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.solidFlag,
+                    size: 20.0,
+                    color: Colors.black,
+                  ),
+                  SizedBox(
+                    width: 24.0,
+                  ),
+                  Text(
+                    " Report",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 2,
+          ),
+          if (postAuthor)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onPostDelete();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.solidTrashAlt,
+                      size: 20.0,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Delete",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

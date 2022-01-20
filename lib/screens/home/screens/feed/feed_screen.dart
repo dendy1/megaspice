@@ -5,7 +5,6 @@ import 'package:megaspice/blocs/auth_bloc/auth_bloc.dart';
 import 'package:megaspice/cubit/cubits.dart';
 import 'package:megaspice/models/models.dart';
 import 'package:megaspice/repositories/repositories.dart';
-import 'package:megaspice/screens/home/screens/navbar/cubit/NavBarCubit.dart';
 import 'package:megaspice/widgets/widgets.dart';
 
 import 'bloc/feed_bloc.dart';
@@ -89,129 +88,137 @@ class _FeedScreenState extends State<FeedScreen> {
             );
             context.read<FeedBloc>().add(FeedFetchEvent());
           },
-          child: feedState.posts.isEmpty &&
-                  feedState.status == FeedStatus.loaded
-              ? _buildShowFirebaseUsers()
-              : ListView.builder(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: feedState.posts.length,
-                  itemBuilder: (context, index) {
-                    final post = feedState.posts[index];
-                    if (post == null) {
-                      return SizedBox();
-                    }
-                    final commentPostState =
-                        context.watch<CommentPostCubit>().state;
-                    final likedPostState = context.watch<LikePostCubit>().state;
-                    final isLiked =
-                        likedPostState.likedPostIds.contains(post.id);
-                    return PostView(
-                      postAuthor: post.author.uid ==
-                          context.read<AuthBloc>().state.user.uid,
-                      post: post,
-                      lastComment:
-                          commentPostState.comments.containsKey(post.id)
-                              ? commentPostState.comments[post.id]
-                              : null,
-                      isLiked: isLiked,
-                      likes: likedPostState.postsLikes.containsKey(post.id)
-                          ? likedPostState.postsLikes[post.id]
-                          : null,
-                      comments:
-                          commentPostState.commentsCount.containsKey(post.id)
-                              ? commentPostState.commentsCount[post.id]
-                              : null,
-                      onLike: () {
-                        if (context.read<AuthBloc>().state.user.uid.isEmpty) {
-                          BotToast.showText(text: "login to like");
-                        } else {
-                          if (isLiked) {
-                            context
-                                .read<LikePostCubit>()
-                                .unLikePost(post: post);
-                          } else {
-                            context.read<LikePostCubit>().likePost(post: post);
-                          }
-                        }
-                      },
-                      onPostDelete: () {
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return ConfirmationDialog(
-                                  message: "This post will be deleted",
-                                  cancelText: "Abort",
-                                  continueText: "Delete",
-                                  cancelOnPressed: () =>
-                                      Navigator.of(context).pop,
-                                  continueOnPressed: () => context
-                                      .read<FeedBloc>()
-                                      .add(FeedDeletePostEvent(post: post)));
-                            });
-                      },
-                    );
-                  },
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              _buildShowFirebaseUsers(),
+              _buildFeed(feedState),
+              if (feedState.status == FeedStatus.paginating)
+                SliverToBoxAdapter(
+                    child:Center(child:Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 0),
+                      child: CircularProgressIndicator(),
+                    ))
                 ),
+            ],
+          ),
         );
     }
   }
 
   Widget _buildShowFirebaseUsers() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+    return SliverToBoxAdapter(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Suggestions for You',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 15),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Suggestions for You',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'See All',
-                  style: const TextStyle(fontSize: 15, color: Colors.blue),
-                ),
-              )
-            ],
+                StreamBuilder<List<User>>(
+                    stream: UserRepo().getAllFirebaseUsers(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final userList = snapshot.data;
+                        if (userList == null) {
+                          return Container(
+                            height: 160,
+                            child: Align(child: Text("Unable to fetch users")),
+                          );
+                        }
+                        return Container(
+                          height: 160,
+                          child: ListView.builder(
+                            padding: EdgeInsets.only(right: 10),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: userList.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final user = userList[index];
+                              return SuggestionTile(user: user);
+                            },
+                          ),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Icon(Icons.error_outline);
+                      } else {
+                        return CircularProgressIndicator();
+                      }
+                    })
+              ],
+            ),
           ),
-          StreamBuilder<List<User>>(
-              stream: UserRepo().getAllFirebaseUsers(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  final userList = snapshot.data;
-                  if (userList == null) {
-                    return Container(
-                      height: 160,
-                      child: Align(child: Text("Unable to fetch users")),
-                    );
-                  }
-                  return Container(
-                    height: 160,
-                    child: ListView.builder(
-                      padding: EdgeInsets.only(right: 10),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: userList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final user = userList[index];
-                        return SuggestionTile(user: user);
-                      },
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Icon(Icons.error_outline);
-                } else {
-                  return CircularProgressIndicator();
-                }
-              })
+          Divider(
+            thickness: 2,
+          )
         ],
       ),
+    );
+  }
+
+  Widget _buildFeed(FeedState feedState) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final post = feedState.posts[index];
+        if (post == null) {
+          return SizedBox();
+        }
+        final commentPostState = context.watch<CommentPostCubit>().state;
+        final likedPostState = context.watch<LikePostCubit>().state;
+        final isLiked = likedPostState.likedPostIds.contains(post.id);
+        return PostView(
+          postAuthor:
+              post.author.uid == context.read<AuthBloc>().state.user.uid,
+          post: post,
+          lastComment: commentPostState.comments.containsKey(post.id)
+              ? commentPostState.comments[post.id]
+              : null,
+          isLiked: isLiked,
+          likes: likedPostState.postsLikes.containsKey(post.id)
+              ? likedPostState.postsLikes[post.id]
+              : null,
+          comments: commentPostState.commentsCount.containsKey(post.id)
+              ? commentPostState.commentsCount[post.id]
+              : null,
+          onLike: () {
+            if (context.read<AuthBloc>().state.user.uid.isEmpty) {
+              BotToast.showText(text: "login to like");
+            } else {
+              if (isLiked) {
+                context.read<LikePostCubit>().unLikePost(post: post);
+              } else {
+                context.read<LikePostCubit>().likePost(post: post);
+              }
+            }
+          },
+          onPostDelete: () {
+            showDialog(
+                context: context,
+                builder: (dialogContext) {
+                  return ConfirmationDialog(
+                      message: "This post will be deleted",
+                      cancelText: "Abort",
+                      continueText: "Delete",
+                      cancelOnPressed: () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                      continueOnPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        context
+                            .read<FeedBloc>()
+                            .add(FeedDeletePostEvent(post: post));
+                      });
+                });
+          },
+        );
+      }, childCount: feedState.posts.length),
     );
   }
 }

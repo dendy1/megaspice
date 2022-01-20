@@ -53,7 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         var status = context.read<ProfileBloc>().state.status;
         if (_scrollController.offset >=
                 _scrollController.position.maxScrollExtent * 0.75 &&
-            !_scrollController.position.outOfRange &&
             status != ProfileStatus.paginating &&
             status != ProfileStatus.failure) {
           context.read<ProfileBloc>().add(ProfilePaginateEvent(
@@ -142,113 +141,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
     }
-  }
-
-  Widget _buildProfileModal(BuildContext context, ProfileState state) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.copy,
-                    size: 24.0,
-                    color: Colors.black,
-                  ),
-                  SizedBox(
-                    width: 24.0,
-                  ),
-                  Text(
-                    " Copy Link",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (!state.isCurrentUser!)
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 16.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.solidFlag,
-                      size: 24.0,
-                      color: Colors.black,
-                    ),
-                    SizedBox(
-                      width: 24.0,
-                    ),
-                    Text(
-                      " Report",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 24.0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (state.isCurrentUser!)
-            Divider(
-              thickness: 2,
-            ),
-          if (state.isCurrentUser!)
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.read<AuthBloc>().add(AuthLogoutRequestedEvent());
-                context.read<LikePostCubit>().clearAllLikedPost();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 16.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.exit_to_app,
-                      size: 24.0,
-                      color: Colors.black,
-                    ),
-                    SizedBox(
-                      width: 24.0,
-                    ),
-                    Text(
-                      " Logout",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 24.0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
   Widget _buildProfileHeader(ProfileState state) {
@@ -357,6 +249,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
         childCount: state.posts.length,
+      ),
+    );
+  }
+
+  Widget _buildProfileModal(BuildContext context, ProfileState state) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Padding(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.copy,
+                    size: 20.0,
+                    color: Colors.black,
+                  ),
+                  SizedBox(
+                    width: 24.0,
+                  ),
+                  Text(
+                    " Copy Link",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (!state.isCurrentUser!)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.solidFlag,
+                      size: 20.0,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Report",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (state.isCurrentUser!)
+            Divider(
+              thickness: 2,
+            ),
+          if (state.isCurrentUser!)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.read<AuthBloc>().add(AuthLogoutRequestedEvent());
+                context.read<LikePostCubit>().clearAllLikedPost();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.exit_to_app,
+                      size: 20.0,
+                      color: Colors.red,
+                    ),
+                    SizedBox(
+                      width: 24.0,
+                    ),
+                    Text(
+                      " Logout",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

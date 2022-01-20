@@ -110,14 +110,14 @@ class EditProfileScreen extends StatelessWidget {
                                 (value) => value!.trim().isEmpty
                                     ? 'Name cannot be empty'
                                     : null),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 24),
                             _buildInput(TextInputType.text, user.gender!,
                                 "Enter your gender", (value) {
                               context
                                   .read<EditProfileCubit>()
                                   .genderChanged(value);
                             }, null),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
                             DateTimePicker(
                                 initialValue: user.dateOfBirth.toString(),
                                 firstDate: DateTime(1980),

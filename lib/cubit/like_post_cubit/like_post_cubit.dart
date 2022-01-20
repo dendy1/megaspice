@@ -21,10 +21,16 @@ class LikePostCubit extends Cubit<LikePostState> {
     required Set<String> postIds,
     required Map<String, int>? postsLikes,
   }) {
-    emit(state.copyWith(
-      likedPostIds: Set<String>.from(state.likedPostIds)..addAll(postIds),
-      postsLikes: postsLikes == null ? state.postsLikes : Map<String, int>.from(state.postsLikes)..addAll(postsLikes!),
-    ));
+    if (postsLikes == null) {
+      emit(state.copyWith(
+        likedPostIds: Set<String>.from(state.likedPostIds)..addAll(postIds),
+      ));
+    } else {
+      emit(state.copyWith(
+        likedPostIds: Set<String>.from(state.likedPostIds)..addAll(postIds),
+        postsLikes: Map<String, int>.from(state.postsLikes)..addAll(postsLikes),
+      ));
+    }
   }
 
   void likePost({

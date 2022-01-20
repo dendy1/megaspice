@@ -74,13 +74,13 @@ class _CommentScreenState extends State<CommentScreen> {
             },
           ),
         ),
-        bottomSheet: _buildCommentBottomSheet(commentState),
-        body: _buildComments(commentState),
+        bottomSheet: _buildCommentBottomSheet(context, commentState),
+        body: _buildComments(context, commentState),
       );
     });
   }
 
-  Widget _buildComments(CommentState state) {
+  Widget _buildComments(BuildContext context, CommentState state) {
     return state.status == CommentStatus.loading
         ? Center(child: const CircularProgressIndicator())
         : ListView.builder(
@@ -121,10 +121,9 @@ class _CommentScreenState extends State<CommentScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                trailing: context.read<AuthBloc>().state.user.uid ==
-                            comment.author.uid ||
-                        state.post!.author.uid ==
-                            context.read<AuthBloc>().state.user.uid
+                trailing: comment.author.uid == context.read<AuthBloc>().state.user.uid
+                             ||
+                        state.post!.author.uid == context.read<AuthBloc>().state.user.uid
                     ? IconButton(
                         constraints: BoxConstraints(maxHeight: 18),
                         padding: new EdgeInsets.all(0),
@@ -152,7 +151,7 @@ class _CommentScreenState extends State<CommentScreen> {
           );
   }
 
-  Widget _buildCommentBottomSheet(CommentState state) {
+  Widget _buildCommentBottomSheet(BuildContext context, CommentState state) {
     return context.read<AuthBloc>().state.status == AuthStatus.unauthenticated
         ? SizedBox()
         : Column(

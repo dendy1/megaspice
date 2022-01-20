@@ -9,6 +9,17 @@ class FeedFetchEvent extends FeedEvent {}
 
 class FeedPaginateEvent extends FeedEvent {}
 
+class FeedUpdatePostsEvent extends FeedEvent {
+  final List<PostModel?> posts;
+
+  FeedUpdatePostsEvent({
+    required this.posts,
+  });
+
+  @override
+  List<Object> get props => [posts];
+}
+
 class FeedDeletePostEvent extends FeedEvent {
   final PostModel post;
 

@@ -34,7 +34,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         _likePostCubit = likePostCubit,
         _commentPostCubit = commentPostCubit,
         super(ProfileState.initial()) {
-    emit(state.copyWith(userModel: authBloc.state.user));
     on<ProfileLoadEvent>(_onProfileLoad);
     on<ProfilePaginateEvent>(_onProfilePaginate);
     on<ProfileUpdatePostsEvent>(_onProfileUpdatePosts);
@@ -65,6 +64,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
 
       List<PostModel?> posts = List.empty();
+      //posts = await _postRepo.getUserPosts(userId: event.userId);
       if (_postsSubscription != null) {
         _postsSubscription!.cancel();
       }
@@ -99,6 +99,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       }
 
       emit(state.copyWith(
+        //userModel: user,
         isCurrentUser: isCurrentUser,
         isFollowing: isFollowing,
         posts: posts,

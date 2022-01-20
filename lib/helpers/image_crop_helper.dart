@@ -46,7 +46,7 @@ class ImageHelper {
           toolbarTitle: title,
           toolbarColor: Theme.of(context).primaryColor,
           toolbarWidgetColor: Colors.white,
-          initAspectRatio: CropAspectRatioPreset.original,
+          initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: false,
         ),
         iosUiSettings: const IOSUiSettings(),
